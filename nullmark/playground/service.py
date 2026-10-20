@@ -229,12 +229,16 @@ class Playground:
             artifact = self.calibrations.get(self.last_settings.calibration_id)
             raw = scheme.detect(attacked.text)
             context = conditions(model, scheme, original["key_ref"])
+            before = original["marked"]["detection"]
             if artifact:
-                artifact.require_compatible(context)
-                after = artifact.evaluate(raw, context=context)
+                try:
+                    after = artifact.evaluate(raw, context=context)
+                except ValueError:
+                    if before["state"] == "DETECTED":
+                        raise
+                    after = {**uncalibrated(raw), "status": "incompatible_calibration"}
             else:
                 after = uncalibrated(raw)
-            before = original["marked"]["detection"]
             eligible = before["state"] == "DETECTED"
             message = (
                 "Eligible detected baseline."

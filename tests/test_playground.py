@@ -72,6 +72,40 @@ def test_attack_route_rejects_stale_generation_and_private_fields(client):
     assert client.post("/api/attack", json={**request, "key_ref": "private"}).status_code == 422
 
 
+def test_incompatible_calibration_still_shows_attack_quality_and_ineligibility(
+    monkeypatch, tmp_path
+):
+    from pathlib import Path
+
+    from nullmark.evaluation.calibration import CalibratedDetector
+    from nullmark.evaluation.quality import SemanticSimilarity
+
+    artifact = CalibratedDetector.load(
+        Path("docs/calibration/qwen-v011/kgw-z_score-fpr-0.01.calibration.json")
+    )
+
+    def unavailable(self, **kwargs):
+        raise ValueError("optional evaluator unavailable")
+
+    monkeypatch.setattr(SemanticSimilarity, "__init__", unavailable)
+    monkeypatch.chdir(tmp_path)
+    client = TestClient(create_app(calibrations=[artifact]), base_url="http://127.0.0.1")
+    original = client.post(
+        "/api/generate",
+        json={"prompt": "word1", "max_new_tokens": 32, "calibration_id": artifact.calibration_id},
+    ).json()
+    assert original["marked"]["detection"]["status"] == "incompatible_calibration"
+    response = client.post(
+        "/api/attack",
+        json={"generation_id": original["generation_id"], "attack": "random_edit", "budget": 0.1},
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["outcome"] == "BASELINE ABSTENTION" and not data["eligible"]
+    assert data["after"]["status"] == "incompatible_calibration"
+    assert "word_edit_fraction" in data["quality"]
+
+
 def test_attack_ui_uses_text_nodes_and_accessible_diff(client):
     script = client.get("/assets/app.js").text
     assert 'node("del", part.before)' in script and 'node("ins", part.after)' in script
