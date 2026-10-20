@@ -1,0 +1,49 @@
+import json
+import subprocess
+import sys
+
+
+def cli(*args):
+    return subprocess.run(
+        [sys.executable, "-m", "nullmark", *map(str, args)],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_cli_help_and_version():
+    assert cli("--help").returncode == 0
+    assert "0.1.0" in cli("--version").stdout
+    assert cli("experiment", "run", "--help").returncode == 0
+    assert cli("detect", "--help").returncode == 0
+
+
+def test_cli_commands_and_errors(tmp_path):
+    config = tmp_path / "config.yaml"
+    config.write_text("name: cli_smoke\nrandom_keys: 1\ndataset:\n  sample_count: 1\n")
+    output = tmp_path / "run"
+    result = cli("experiment", "run", config, "--output", output)
+    assert result.returncode == 0, result.stderr
+    assert "smoke" in result.stdout
+    assert cli("experiment", "summarize", output).returncode == 0
+    args = ["--config", config, "--scheme", "kgw", "--secrets", output / "private/secrets.json"]
+    generated = cli("generate", *args, "--prompt", "Explain a public library.")
+    assert generated.returncode == 0, generated.stderr
+    text = tmp_path / "continuation.txt"
+    text.write_text(generated.stdout, encoding="utf-8")
+    detected = cli("detect", *args, "--text-file", text)
+    assert detected.returncode == 0, detected.stderr
+    assert json.loads(detected.stdout)["prediction"] is True
+    assert (
+        cli("generate", "--config", config, "--scheme", "none", "--prompt", "Hello").returncode == 0
+    )
+    assert (
+        cli("generate", "--config", config, "--scheme", "kgw", "--prompt", "Hello").returncode == 2
+    )
+    bad = tmp_path / "bad.secrets.json"
+    bad.write_text('{"master_hex": "secret-should-not-appear"}')
+    failed = cli(
+        "detect", "--config", config, "--scheme", "kgw", "--secrets", bad, "--text-file", text
+    )
+    assert failed.returncode == 2
+    assert "secret-should-not-appear" not in failed.stdout + failed.stderr
