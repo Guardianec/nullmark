@@ -32,6 +32,7 @@ def conditions(model, scheme: WatermarkScheme, key_ref: str) -> dict:
         "key_ref": key_ref,
         "score_input": "retokenized visible continuation; prompt excluded",
         "nullmark": __version__,
+        "detector_protocol": "nullmark-detector-v1",
     }
 
 
@@ -168,7 +169,14 @@ class CalibratedDetector:
         return cls.from_dict(json.loads(path.read_text("utf-8")))
 
     def require_compatible(self, context: dict) -> None:
-        if canonical(context) != self.conditions_json:
+        def identity(value):
+            value = dict(value)
+            # App releases may change while the frozen scoring protocol stays fixed.
+            value.pop("nullmark", None)
+            value.setdefault("detector_protocol", "nullmark-detector-v1")
+            return canonical(value)
+
+        if identity(context) != identity(json.loads(self.conditions_json)):
             raise ValueError(
                 "calibration does not match model, watermark, sampling or key reference"
             )

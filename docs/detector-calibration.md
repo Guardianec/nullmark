@@ -137,7 +137,11 @@ for research decisions, not those demo booleans.
 `CalibratedDetector` is immutable, serializable and integrity checked. It binds
 scheme/statistic, public watermark config (including depth), model/blob/runtime
 and template identity, generation/sampling settings, key reference, dataset hash,
-length support, timestamp/version and threshold. It rejects incompatible reuse.
+length support, timestamp/version and threshold. Compatibility follows
+`nullmark-detector-v1`, not the application release number, so a future release
+can reuse an unchanged protocol. Schema-v1 artifacts without the explicit protocol
+field mean detector v1. Any scoring/masking change requires a different protocol
+and calibration. Incompatible conditions or protocols are rejected.
 The integrity digest detects accidental edits; it is not an authenticity signature.
 `require_frozen_evaluator()` guards future attack-success code.
 `require_detected_baseline()` additionally restricts evasion eligibility to

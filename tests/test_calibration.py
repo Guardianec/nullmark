@@ -100,6 +100,17 @@ def test_frozen_artifact_roundtrip_integrity_and_conditions(tmp_path):
         CalibratedDetector.from_dict(data)
 
 
+def test_frozen_protocol_reusable_across_application_releases():
+    context = {"model": "test", "nullmark": "0.1.1"}
+    artifact = fitted(context)
+    # Schema-v1 artifacts predate the explicit protocol field; both mean v1.
+    artifact.require_compatible(
+        {**context, "nullmark": "0.2.0", "detector_protocol": "nullmark-detector-v1"}
+    )
+    with pytest.raises(ValueError):
+        artifact.require_compatible({**context, "detector_protocol": "nullmark-detector-v2"})
+
+
 @pytest.mark.parametrize(
     "score,count,state",
     [

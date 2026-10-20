@@ -104,6 +104,24 @@ These excerpts illustrate instruction-following differences, not a factual
 accuracy guarantee. The full local verification outputs remain in ignored local
 artifacts; private keys are not published.
 
+## Experiment 002 qualitative inspection
+
+The first calibration prompt encountered in each of the eight styles was inspected
+across plain, KGW, and SynthID depths 10/20/30: **40 continuations**. Selection was
+by deterministic prompt order, before threshold fitting, rather than score. Prompt
+IDs were `argument-24`, `essay-13`, `factual-12`, `instructions-27`, `knowledge-21`,
+`narrative-25`, `science-22`, and `technical-13`, with the `cal-v1-` prefix.
+
+All depths produced readable, topical prose in this small qualitative inspection.
+The short boat-builder narrative completed in each condition. The longer essay,
+argument and technical answers frequently ended mid-sentence at the predeclared
+192-token cap, including the plain control. Some science/general-knowledge answers
+contained questionable explanations or broad assertions, and phrasing varied among
+conditions. These observations do not establish factual accuracy or quality
+non-inferiority, and are not a blinded human preference study. No automated
+semantic-quality model or quality score was introduced. Detectability alone must
+not determine the future configuration recommendation.
+
 ## Browser and practical limits
 
 The browser exercised Qwen plain, paired KGW and paired SynthID, token selection,

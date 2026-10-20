@@ -5,7 +5,7 @@
 - Implementation commit `6adae6eb4bdcef5ae3565dddf4c47593a5f21f95` passed
   [GitHub CI](https://github.com/Guardianec/nullmark/actions/runs/39424691204)
   and the paired pull-request workflow run.
-- Local full suite: **145 passed, 1 skipped**. Ruff lint/format passed. The
+- Local full suite: **146 passed, 1 skipped**. Ruff lint/format passed. The
   default skip remains the opt-in pinned GPT-2 integration test.
 - Saved historical Experiment 001 samples replayed exact text and original IDs
   for plain, SynthID and KGW from the existing offline GPT-2 cache. The historical
@@ -20,6 +20,8 @@
   abstention, baseline detection eligibility, per-sample frozen decision exports,
   and calibrated/uncalibrated Playground behavior. Legacy CLI predictions are
   explicitly tagged demo-only and do not expose a calibrated DETECTED state.
+- Protocol compatibility is independent of application release version: unchanged
+  detector-v1 artifacts remain reusable, while detector-protocol changes are rejected.
 - Browser verification exercised the named weighted-mean mode, token inspection,
   selected-statistic trace, visible/usable counts and score-only presentation.
   [Screenshot](images/playground-calibration.png).
