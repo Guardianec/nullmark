@@ -25,6 +25,7 @@ class SynthIDState:
     g_values: list[int]
     mean_g: float
     cumulative_mean_g: float | None
+    cumulative_score: float | None = None
 
 
 @dataclass(frozen=True)
@@ -101,6 +102,12 @@ def inspect_tokens(
         else:
             detector = scheme.detector()
     count, total = 0, 0
+    weighted_total = 0.0
+    weights = (
+        torch.linspace(10, 1, scheme.config.depth, dtype=torch.float64).tolist()
+        if isinstance(scheme, SynthIDScheme)
+        else []
+    )
     rows = []
     ended = False
     start = int(not generation and bool(ids) and ids[0] == model.detector_config.bos_token_id)
@@ -131,8 +138,14 @@ def inspect_tokens(
             if scored:
                 count += 1
                 total += sum(gs)
+                weighted_total += sum(g * w for g, w in zip(gs, weights, strict=True))
             cumulative = total / (count * scheme.config.depth) if count else None
-            synthid = SynthIDState(gs, sum(gs) / len(gs), cumulative)
+            score = (
+                (weighted_total / (count * sum(weights)) if count else None)
+                if scheme.config.statistic == "weighted_mean"
+                else cumulative
+            )
+            synthid = SynthIDState(gs, sum(gs) / len(gs), cumulative, score)
         rows.append(
             TokenInspection(
                 i,

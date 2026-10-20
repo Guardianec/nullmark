@@ -2,6 +2,17 @@
 
 ## 0.1.1 — 2026-10-20
 
+Final detector calibration pass:
+
+- Experiment 002: deterministic disjoint prompt splits, clean-only finite-sample
+  target-FPR thresholds, frozen reusable condition-bound calibration artifacts.
+- SynthID raw mean-g retained; reference weighted mean added without changing generation.
+- Held-out TPR/FPR, uncertainty, specificity, abstention, length buckets, score
+  distributions, descriptive ROC data, native/visible diagnostics and runtime reporting.
+- Playground names the statistic and requires compatible calibration for binary
+  decisions; unsupported conditions/lengths report insufficient evidence.
+- Existing Experiment 001 and v0.1.1 scope retained; no attack implementation.
+
 Visual Playground (maintenance/usability insertion):
 
 - Optional direct GGUF backend reuses supported Ollama-installed weights; no duplicate model download.

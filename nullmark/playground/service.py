@@ -7,6 +7,11 @@ from typing import Literal
 from pydantic import Field
 
 from nullmark.config import KGWConfig, ModelConfig, StrictConfig, SynthIDConfig
+from nullmark.evaluation.calibration import (
+    CalibratedDetector,
+    conditions,
+    uncalibrated,
+)
 from nullmark.evaluation.inspection import paired_generation
 from nullmark.evaluation.secrets import KeyStore, key_reference
 from nullmark.models import TextGenerationBackend, load_model
@@ -18,6 +23,7 @@ GPT2_REVISION = "607a30d783dfa663caf39e06633721c8d4cfcd7e"
 
 
 class PlaygroundSettings(StrictConfig):
+    calibration_id: str | None = Field(None, pattern=r"^[0-9a-f]{64}$")
     model: Literal["builtin-tiny", "gpt2", "ollama"] = "builtin-tiny"
     ollama_model: str | None = Field(None, max_length=256)
     ollama_digest: str | None = Field(None, pattern=r"^[0-9a-f]{64}$")
@@ -38,8 +44,11 @@ class PlaygroundSettings(StrictConfig):
 
 
 class Playground:
-    def __init__(self):
-        self._keys = KeyStore.create()
+    def __init__(self, *, keys=None, calibrations=()):
+        self._keys = keys or KeyStore.create()
+        self.calibrations: dict[str, CalibratedDetector] = {
+            c.calibration_id: c for c in calibrations
+        }
         self._models: dict[tuple, TextGenerationBackend] = {}
         self.lock = Lock()
 
@@ -121,4 +130,25 @@ class Playground:
             key_reference(self._keys, settings.scheme, settings.key_index) if scheme else None
         )
         result["model"] = model.metadata()
+        if scheme:
+            artifact = self.calibrations.get(settings.calibration_id)
+            context = conditions(model, scheme, result["key_ref"])
+            for side in ("plain", "marked"):
+                sample = result.get(side)
+                if sample is None:
+                    continue
+                from nullmark.watermark.base import DetectionResult
+
+                raw = DetectionResult(**sample["detection"])
+                sample["visible_token_count"] = len(sample["detector_tokens"])
+                if artifact:
+                    try:
+                        sample["detection"] = artifact.evaluate(raw, context=context)
+                    except ValueError:
+                        sample["detection"] = {
+                            **uncalibrated(raw),
+                            "status": "incompatible_calibration",
+                        }
+                else:
+                    sample["detection"] = uncalibrated(raw)
         return result

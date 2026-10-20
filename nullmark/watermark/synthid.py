@@ -1,4 +1,4 @@
-"""HF SynthID generation and reference mean scoring, without a trained detector."""
+"""HF SynthID generation and reference raw/weighted mean scoring."""
 
 import torch
 from transformers import SynthIDTextWatermarkingConfig
@@ -6,6 +6,21 @@ from transformers import SynthIDTextWatermarkingConfig
 from nullmark.config import SynthIDConfig
 from nullmark.models import TextGenerationBackend
 from nullmark.watermark.base import DetectionResult, WatermarkScheme
+
+
+def mean_score(values: torch.Tensor, mask: torch.Tensor, statistic: str) -> float:
+    """Adapted from google-deepmind/synthid-text detector_mean.py (Apache-2.0).
+
+    Reference default: descending linear layer weights 10..1, normalized by
+    their sum. Masking and g-values remain those of the pinned HF processor.
+    """
+    selected = values[mask].double()
+    if statistic == "raw_mean":
+        return float(values[mask].float().mean().item())
+    if statistic != "weighted_mean":
+        raise ValueError("unknown SynthID statistic")
+    weights = torch.linspace(10, 1, values.shape[-1], dtype=torch.float64, device=values.device)
+    return float(((selected * weights).sum(-1) / weights.sum()).mean().item())
 
 
 class SynthIDScheme(WatermarkScheme):
@@ -28,21 +43,24 @@ class SynthIDScheme(WatermarkScheme):
 
     @torch.inference_mode()
     def detect(self, text: str) -> DetectionResult:
-        ids = self.model.encode(text)
+        return self.score_ids(self.model.encode(text))
+
+    @torch.inference_mode()
+    def score_ids(self, ids: list[int]) -> DetectionResult:
         cfg = self.config
         if len(ids) < cfg.ngram_len:
             return DetectionResult(
-                None, None, cfg.threshold, "mean_g", 0, status="insufficient_text"
+                None, None, cfg.threshold, cfg.statistic, 0, status="insufficient_text"
             )
         values, mask = self.scoring_data(ids)
         count = int(mask.sum().item())
         if count == 0:
             return DetectionResult(
-                None, None, cfg.threshold, "mean_g", 0, status="insufficient_text"
+                None, None, cfg.threshold, cfg.statistic, 0, status="insufficient_text"
             )
         # Reference mean statistic: sum of unmasked g-values / (depth * unmasked contexts).
-        score = float(values[mask].float().mean().item())
-        return DetectionResult(score, score > cfg.threshold, cfg.threshold, "mean_g", count)
+        score = mean_score(values, mask, cfg.statistic)
+        return DetectionResult(score, score > cfg.threshold, cfg.threshold, cfg.statistic, count)
 
     def scoring_data(self, ids: list[int]) -> tuple[torch.Tensor, torch.Tensor]:
         processor = self.generation_config().construct_processor(
@@ -62,7 +80,9 @@ class SynthIDScheme(WatermarkScheme):
         return {
             "scheme": "synthid",
             "implementation": "transformers.SynthIDTextWatermarkingConfig",
-            "detector": "reference_mean_g",
+            "detector": "SynthID raw mean-g"
+            if self.config.statistic == "raw_mean"
+            else "SynthID weighted mean",
             "calibrated": False,
             **self.config.model_dump(),
             "skip_first_ngram_calls": True,

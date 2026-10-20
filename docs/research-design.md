@@ -66,6 +66,15 @@ when available, model identifier and configuration are stored in every run.
 
 ## Detector choices and statistics
 
+Experiment 002 adds clean-only target-FPR calibration on a deterministic prompt
+split, frozen before held-out generation. It compares explicitly named SynthID
+raw mean-g and upstream weighted mean statistics, plus KGW z-scores. The immutable
+artifact binds model/config/sampling/key identity and observed usable-length support.
+Unsupported lengths/counts abstain. See [the calibration protocol](detector-calibration.md)
+for finite-sample ranks, uncertainties, length buckets, native/visible diagnostics,
+and the guard future attack-success metrics must call. Historical demo thresholds
+below remain for Experiment 001 reproduction; they are not calibrated decisions.
+
 SynthID generation uses the Google DeepMind/Hugging Face integration. Its
 reference g-values are extracted with the matching secret config; repeated
 contexts and EOS/padding suffixes are masked. We average unmasked g-values across

@@ -24,6 +24,7 @@ class Generation:
     seconds: float
     prompt_token_ids: list[int] | None = None
     processor_calls: int = 0
+    watermark_seconds: float | None = None
 
 
 class TextGenerator(Protocol):

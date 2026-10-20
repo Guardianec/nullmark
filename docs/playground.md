@@ -52,7 +52,33 @@ positions need not align: a changed sample changes future context. Watermarks
 bias sampling; they insert no visible symbols. None generates one plain sample
 without a detector.
 
-## Hidden keys
+## Calibrated detector presentation
+
+Select **SynthID raw mean-g** or **SynthID weighted mean** explicitly. Results show
+visible tokens, usable detector tokens, signal score, calibrated threshold and
+target FPR. Without calibration the interface says **UNCALIBRATED SCORE** and
+**Binary classification unavailable**. Legacy/demo lines on the trace are educational
+references. A partial prefix crossing is not a calibrated sequential test.
+
+Load a frozen artifact and its matching private master at server startup:
+
+```sh
+nullmark playground --calibration results/002-qwen/synthid-d10-weighted_mean-fpr-0.01.calibration.json --secrets results/002-qwen/private/secrets.json
+```
+
+Repeat `--calibration` to offer multiple artifacts in the selector. Set the same
+model, sampling settings, maximum output length, depth and key index as the run.
+Fresh key makes the previous calibration incompatible. The server reads private
+files locally; the browser receives neither keys nor filesystem paths. An incompatible
+artifact disables classification. Unsupported usable lengths or insufficient clean
+calibration counts produce **INSUFFICIENT EVIDENCE**. The threshold applies only
+within its frozen length regime, and pooled FPR does not imply FPR in every bucket.
+
+See [the protocol](detector-calibration.md) and the verified score-only view:
+
+![Named weighted-mean score without binary certainty](images/playground-calibration.png)
+
+## Hidden key lifetime
 
 The process creates an OS-random master in memory. Key index selects a stable slot
 under that master. Repeating settings/seed reuses it; **Fresh key** rotates the
@@ -87,9 +113,10 @@ detection and traces its actual behavior. Repeated text is not independent
 evidence. Regression tests cover it; any future detector correction needs
 separate scientific evaluation/versioning.
 
-Detection reports z-score, threshold, prediction, tokens scored and a standard
-normal-approximation upper-tail p-value. This is not empirical calibration,
-probability of AI generation, or proof of authorship.
+Detection reports a z-score, usable counts and, with a compatible artifact, a
+frozen threshold and three-state result. The standard normal-approximation
+upper-tail p-value is a legacy diagnostic, not empirical calibration or a
+probability of AI generation.
 
 ## SynthID: depth values and masks
 
@@ -99,11 +126,11 @@ subsequent state uses preceding continuation tokens, not prompt context. Repeate
 contexts and EOS suffixes use the existing reference mean detector's masks.
 Neutral positions are initial context or masked.
 
-The chart overlays the threshold on cumulative mean-g for both samples.
-**The threshold is uncalibrated. This visualization does not establish a statistical
-false-positive rate.** Scores are not posterior probabilities of AI generation.
-Panels show score, threshold, prediction and usable count. Entirely masked/short
-inputs return `insufficient_text`, inviting a longer continuation.
+The chart follows the selected raw or weighted mean statistic for both samples.
+Its threshold line is labeled calibrated or legacy/demo. A calibrated line applies
+only to the final supported length, not repeated testing of every prefix. Scores
+are not posterior probabilities of AI generation. Uncalibrated, entirely masked,
+short or unsupported inputs cannot issue a binary decision.
 
 ## Stepper, charts and limits
 

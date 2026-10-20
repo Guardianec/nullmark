@@ -1,0 +1,22 @@
+name: 002_detector_calibration
+seed: 20261020
+calibration_count: 128
+evaluation_count: 100
+target_fprs: [0.01]
+depths: [10, 20, 30]
+minimum_usable_tokens: 64
+dataset:
+  source: jsonl
+  path: prompts-v1.jsonl
+  sample_count: 240
+model:
+  backend: ollama-gguf
+  name: qwen3.5:9b-q4_K_M
+  revision: 02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d
+  max_new_tokens: 192
+  temperature: 0.8
+  top_k: 40
+  top_p: 0.95
+  threads: 8
+  context_length: 2048
+  offload: gpu

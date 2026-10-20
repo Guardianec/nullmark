@@ -14,6 +14,13 @@ class DetectionResult:
     tokens_scored: int
     p_value: float | None = None
     status: str = "ok"
+    decision_scope: str = "legacy_demo"
+
+    @property
+    def state(self) -> str:
+        if self.prediction is None:
+            return "INSUFFICIENT EVIDENCE"
+        return "DETECTED" if self.prediction else "NOT DETECTED"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -25,6 +32,9 @@ class WatermarkScheme(ABC):
 
     @abstractmethod
     def detect(self, text: str) -> DetectionResult: ...
+
+    @abstractmethod
+    def score_ids(self, ids: list[int]) -> DetectionResult: ...
 
     @abstractmethod
     def metadata(self) -> dict: ...

@@ -6,7 +6,7 @@ it does not vendor their processor or detector source files.
 | Component | Source | License / use |
 | --- | --- | --- |
 | Transformers 4.57.6 | https://github.com/huggingface/transformers/tree/v4.57.6 | Apache-2.0; SynthID and KGW generation, g-value extraction, masks, KGW detector |
-| SynthID-Text reference | https://github.com/google-deepmind/synthid-text | Apache-2.0; mean-scoring mathematical definition and design reference |
+| SynthID-Text reference | https://github.com/google-deepmind/synthid-text/tree/a6ec02c22ce87177c061643503e14a7cc839dc2b | Apache-2.0; raw/weighted mean definitions, adapted with existing HF masks/g-values; Copyright 2026 Google LLC |
 | Original KGW implementation | https://github.com/jwkirchenbauer/lm-watermarking | Apache-2.0; provenance of the Transformers implementation |
 | GPT-2 model/tokenizer | https://huggingface.co/openai-community/gpt2 | MIT; downloaded separately, not redistributed in this repository |
 | PyTorch | https://github.com/pytorch/pytorch | BSD-3-Clause; tensor operations, model inference, RNG |

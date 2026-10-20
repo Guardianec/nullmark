@@ -164,3 +164,64 @@ def test_discovery_route_offline_and_without_paths(client, monkeypatch):
     monkeypatch.setattr(app, "list_models", offline)
     result = client.get("/api/models")
     assert result.json()["models"] == [] and "Start Ollama" in result.text
+
+
+@pytest.mark.parametrize("scheme", ["kgw", "synthid"])
+def test_uncalibrated_gui_has_no_binary_claim(client, scheme):
+    response = client.post(
+        "/api/generate",
+        json={
+            "prompt": "word1 word2",
+            "scheme": scheme,
+            "max_new_tokens": 32,
+        },
+    )
+    for side in ("plain", "marked"):
+        sample = response.json()[side]
+        d = sample["detection"]
+        assert d["prediction"] is None and d["threshold"] is None
+        assert d["state"] == "INSUFFICIENT EVIDENCE" and d["status"] == "uncalibrated"
+        assert sample["visible_token_count"] == 32
+    assert "UNCALIBRATED SCORE" in client.get("/assets/app.js").text
+
+
+@pytest.mark.parametrize("supported_length", [True, False])
+def test_gui_loaded_calibration_and_insufficient_evidence(keys, supported_length):
+    from nullmark.evaluation.calibration import CalibratedDetector, conditions
+    from nullmark.evaluation.secrets import key_reference
+    from nullmark.watermark.base import DetectionResult
+    from nullmark.watermark.synthid import SynthIDScheme
+
+    service = Playground(keys=keys)
+    settings = PlaygroundSettings(prompt="word1 word2", scheme="synthid", max_new_tokens=32)
+    first = service.generate(settings)
+    model = next(iter(service._models.values()))
+    scheme = SynthIDScheme(model, settings.synthid, keys.derive("synthid", 0))
+    context = conditions(model, scheme, key_reference(keys, "synthid", 0))
+    count = first["marked"]["detection"]["tokens_scored"] if supported_length else 128
+    with pytest.warns(UserWarning):
+        artifact = CalibratedDetector.fit(
+            scheme="synthid",
+            statistic="raw_mean",
+            context=context,
+            dataset_hash="a" * 64,
+            clean=[DetectionResult(0.1, None, 0.6, "raw_mean", count) for _ in range(100)],
+            target_fpr=0.01,
+            minimum_usable_tokens=1,
+        )
+    service.calibrations[artifact.calibration_id] = artifact
+    calibrated = settings.model_copy(update={"calibration_id": artifact.calibration_id})
+    detected = service.generate(calibrated)["marked"]["detection"]
+    assert detected["state"] == ("DETECTED" if supported_length else "INSUFFICIENT EVIDENCE")
+    assert detected["threshold"] == 0.1 and detected["target_fpr"] == 0.01
+    assert detected["status"] == ("ok" if supported_length else "unsupported_length")
+    service.fresh_key()
+    mismatch = service.generate(calibrated)["marked"]["detection"]
+    assert mismatch["prediction"] is None and mismatch["status"] == "incompatible_calibration"
+    service_model = next(iter(service._models.values()))
+    service_model.close()
+
+
+def test_calibration_listing_does_not_expose_files_or_keys(client):
+    response = client.get("/api/calibrations")
+    assert response.status_code == 200 and response.json() == {"calibrations": []}

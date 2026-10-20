@@ -65,7 +65,9 @@ instruction model. The Windows validation used the already installed
 `qwen3.5:9b-q4_K_M`; no duplicate Qwen weights were downloaded. Explore **None**, **KGW**, and **SynthID**; compare plain and
 watermarked generation with the same seed; select tokens or step through context
 and watermark state. KGW shows green/red membership and cumulative z-scores;
-SynthID shows depth g-values and cumulative mean-g, explicitly **uncalibrated**.
+SynthID shows depth g-values and explicitly named raw/weighted mean traces.
+Without a compatible calibration, both detectors show **UNCALIBRATED SCORE**
+and disable binary classification.
 Detector scores are statistical evidence, never proof of authorship.
 
 For existing Ollama models, install a compatible optional native inference build
@@ -93,6 +95,21 @@ in the controls and result metadata. Historical Experiment 001 explicitly retain
 See [the playground guide](docs/playground.md) for interpretation, hidden-key
 lifetime, detector caveats and local-server security. The next research milestone
 remains **v0.2 — Baseline Attacks**.
+
+## Calibrating detectors (Experiment 002)
+
+```sh
+nullmark calibrate configs/calibration/qwen.yaml --output results/002-qwen
+```
+
+The deterministic 128-prompt calibration and independent 100-prompt evaluation
+splits cover eight styles. Clean calibration scores select thresholds for the
+configured target FPR (1% by default); artifacts are frozen before held-out
+generation. The study compares SynthID raw/weighted mean at depths 10/20/30 and
+KGW, with length buckets, abstention, score distributions, runtime and native versus
+visible-token diagnostics. A 1% target is not a guarantee of 1% population FPR:
+100 clean samples still have substantial tail uncertainty. Small runs are labeled
+exploratory. [Protocol, artifacts and limitations](docs/detector-calibration.md).
 
 ## Reproducing Experiment 001
 
@@ -197,12 +214,12 @@ generation algorithms:
 
 | Family | Generation | Detection |
 | --- | --- | --- |
-| SynthID-Text | `SynthIDTextWatermarkingConfig` | HF reference g-values, context/EOS masks, reference mean statistic |
+| SynthID-Text | `SynthIDTextWatermarkingConfig` | HF g-values/masks; named raw and reference weighted mean statistics |
 | KGW-style | `WatermarkingConfig`, `lefthash` | HF `WatermarkDetector`, HF n-gram scorer; see caveat below |
 
 SynthID varies the key at each depth and the sampling-table seed; KGW varies the
 hashing key. Context sizes, thresholds and other public parameters are configured
-in YAML. SynthID uses a mean-g threshold of 0.60 by default; it is uncalibrated,
+in YAML. Experiment 001 retains a demo raw mean-g threshold of 0.60; it is uncalibrated,
 not a probability, and has no claimed p-value or target false-positive rate.
 NullMark does not use an untrained Bayesian detector. The pinned KGW detector
 currently counts repeated n-grams separately despite its unique-n-gram option (see the playground guide). KGW reports a z-score and

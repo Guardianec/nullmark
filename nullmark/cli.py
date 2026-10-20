@@ -23,9 +23,15 @@ def parser() -> argparse.ArgumentParser:
     )
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
+    calibrate = commands.add_parser("calibrate", help="Calibrate frozen detector operating points")
+    calibrate.add_argument("config", type=Path)
+    calibrate.add_argument("--output", type=Path)
+    calibrate.add_argument("--secrets", type=Path, help="Replay using a private calibration master")
     playground = commands.add_parser("playground", help="Launch the local Visual Playground")
     playground.add_argument("--host", choices=("127.0.0.1", "localhost"), default="127.0.0.1")
     playground.add_argument("--port", type=int, default=8765)
+    playground.add_argument("--calibration", type=Path, action="append", default=[])
+    playground.add_argument("--secrets", type=Path, help="Private master matching loaded artifacts")
     model = commands.add_parser("model", help="Check an installed local inference backend")
     model_commands = model.add_subparsers(dest="model_command", required=True)
     check = model_commands.add_parser(
@@ -67,6 +73,13 @@ def parser() -> argparse.ArgumentParser:
 
 
 def execute(args) -> int:
+    if args.command == "calibrate":
+        from nullmark.experiments.calibration import run_calibration
+
+        output = run_calibration(args.config, output=args.output, secrets_path=args.secrets)
+        print((output / "summary.md").read_text("utf-8"))
+        print(f"Results: {output.resolve()}")
+        return 0
     if args.command == "model":
         from nullmark.models.diagnostics import check_ollama
         from nullmark.models.ollama import LocalModelError
@@ -88,7 +101,17 @@ def execute(args) -> int:
                 'Install with: pip install "nullmark[gui]" (checkout: pip install -e ".[gui]")'
             ) from None
         print(f"NullMark Visual Playground: http://{args.host}:{args.port}", flush=True)
-        launch(args.host, args.port)
+        from nullmark.evaluation.calibration import CalibratedDetector
+        from nullmark.evaluation.secrets import KeyStore
+
+        if args.calibration and args.secrets is None:
+            raise CLIError("--calibration requires its matching --secrets private master file")
+        launch(
+            args.host,
+            args.port,
+            keys=KeyStore.load(args.secrets) if args.secrets else None,
+            calibrations=[CalibratedDetector.load(p) for p in args.calibration],
+        )
         return 0
     if args.command == "experiment":
         if args.experiment_command == "summarize":

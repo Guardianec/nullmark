@@ -27,6 +27,7 @@ function settings() {
     offload: $("offload").value,
     context_length: num("context-length"),
     scheme: $("scheme").value,
+    calibration_id: $("calibration").value || null,
     device: $("device").value,
     prompt: $("prompt").value,
     seed: num("seed"),
@@ -43,6 +44,7 @@ function settings() {
       threshold: num("kgw-threshold")
     },
     synthid: {
+      statistic: $("statistic").value,
       ngram_len: num("ngram"),
       depth: num("depth"),
       context_history_size: num("history"),
@@ -185,9 +187,11 @@ function sampleCard(sample, side) {
   const d = sample.detection,
     stats = node("div", null, "stats");
   [
-    ["Tokens", sample.token_count],
-    [d ? d.statistic === "mean_g" ? "Mean-g" : "z-score" : "Score", fmt(d?.score)],
-    ["Threshold", fmt(d?.threshold)]
+    ["Visible tokens", sample.visible_token_count ?? sample.detector_tokens.length],
+    ["Usable detector tokens", d?.tokens_scored ?? "—"],
+    ["Signal score", fmt(d?.score)],
+    ["Calibrated threshold", fmt(d?.threshold)],
+    ["Target FPR", d?.target_fpr == null ? "—" : `${100*d.target_fpr}%`]
   ].forEach(([label, value]) => {
     const stat = node("div", null, "stat");
     stat.append(node("span", label), node("strong", value));
@@ -195,8 +199,11 @@ function sampleCard(sample, side) {
   });
   article.append(stats);
   let decision = "No watermark detector selected.";
-  if (d) decision = d.status === "insufficient_text" ? "Not enough scored tokens for detection. Generate a longer continuation." : `${d.prediction ? "Detected":"Not detected"} · ${d.tokens_scored} tokens scored${d.p_value != null ? " · approximate p = "+d.p_value.toExponential(2):" · uncalibrated mean-g"}`;
-  if (d) decision = `${result.scheme === "kgw" ? "KGW" : "SynthID mean-g"} · ${decision}`;
+  if (d) {
+    const name = result.scheme === "kgw" ? "KGW z-score" : d.statistic === "weighted_mean" ? "SynthID weighted mean" : "SynthID raw mean-g";
+    decision = `${name} · ${d.calibration_id ? d.state : "UNCALIBRATED SCORE · Calibration: none · Binary classification unavailable"}`;
+    if (d.state === "INSUFFICIENT EVIDENCE") decision += ` · ${d.status.replaceAll("_", " ")}. Low usable-token counts or unsupported calibration weaken evidence.`;
+  }
   article.append(node("div", decision, "decision"));
   return article;
 }
@@ -219,8 +226,8 @@ function render() {
   ];
   legend.forEach(([text, cls]) => $("legend").append(node("span", text, cls)));
   $("comparison").textContent = result.plain ? (result.first_divergence == null ? "Identical token streams in this sample. " : `First divergence: token ${result.first_divergence+1}. `) + "Same prompt, model and sampling seed. Later token positions are not guaranteed to align. A watermark biases sampling; it inserts no visible symbols." : "Select a token to inspect the actual generation context. Watermarks bias sampling; they insert no visible symbols.";
-  $("detector-note").textContent = (result.scheme === "synthid" ? "SynthID mean-g is uncalibrated. This threshold does not establish a statistical false-positive rate. " : result.scheme === "kgw" ? "KGW uses the pinned HF n-gram scorer; p-values use a normal approximation, without empirical calibration. " : "No detector selected. ") + "Trace: retokenized continuation only, excluding prompt. Detection is never proof of authorship.";
-  $("chart-label").textContent = result.scheme === "none" ? "NO DETECTOR" : result.scheme === "synthid" ? "CUMULATIVE MEAN-G" : "CUMULATIVE Z-SCORE";
+  $("detector-note").textContent = "A score measures signal; binary classification requires a compatible frozen calibration. The pooled target FPR does not guarantee FPR at each text length. Trace: retokenized visible continuation, excluding prompt. A threshold on this cumulative trace applies only to the final supported length; repeated prefix testing is not calibrated.";
+  $("chart-label").textContent = result.scheme === "none" ? "NO DETECTOR" : result.scheme === "synthid" ? `CUMULATIVE ${result.public_parameters.statistic === "weighted_mean" ? "WEIGHTED MEAN" : "RAW MEAN-G"}` : "CUMULATIVE Z-SCORE";
   document.querySelector(".chart-key").hidden = result.scheme === "none";
   chart();
   select("marked", 0);
@@ -255,7 +262,7 @@ function select(side, index) {
   if (result.scheme === "kgw") entries.push(["Parameters", `γ ${p.greenlist_ratio} · bias ${p.bias} · context ${p.context_width}`]);
   if (result.scheme === "synthid") entries.push(["Parameters", `n ${p.ngram_len} · depth ${p.depth} · history ${p.context_history_size}`]);
   if (t.kgw) entries.push(["Context trace z", fmt(t.kgw.cumulative_z)]);
-  if (t.synthid) entries.push(["Token mean-g", fmt(t.synthid.mean_g)], ["Cumulative mean-g", fmt(t.synthid.cumulative_mean_g)]);
+  if (t.synthid) entries.push(["Token raw mean-g", fmt(t.synthid.mean_g)], ["Cumulative raw mean-g", fmt(t.synthid.cumulative_mean_g)], ["Selected statistic trace", fmt(t.synthid.cumulative_score)]);
   entries.forEach(([k, v]) => dl.append(node("dt", k), node("dd", v)));
   box.append(dl);
   if (t.synthid) {
@@ -284,13 +291,15 @@ function chart() {
   const box = $("chart");
   box.replaceChildren();
   const samples = [result.marked, result.plain].filter(Boolean);
-  const get = t => t.kgw?.cumulative_z ?? t.synthid?.cumulative_mean_g ?? null;
+  const get = t => t.kgw?.cumulative_z ?? t.synthid?.cumulative_score ?? null;
   const values = samples.flatMap(s => s.detector_tokens.map(get).filter(v => v != null));
   if (!values.length) {
     box.append(node("p", result.scheme === "none" ? "No detector selected." : "Not enough scored tokens. Generate a longer continuation.", "chart-empty"));
     return;
   }
-  const threshold = result.marked.detection.threshold;
+  const detection = result.marked.detection;
+  const threshold = detection.threshold ?? detection.legacy_threshold;
+  const thresholdLabel = detection.calibration_id ? "calibrated threshold" : "legacy/demo threshold";
   let lo = result.scheme === "synthid" ? 0 : Math.min(0, ...values) - .5,
     hi = result.scheme === "synthid" ? 1 : Math.max(threshold, ...values) + 1;
   const W = 540,
@@ -305,7 +314,7 @@ function chart() {
   const svg = svgNode("svg", {
     viewBox: `0 0 ${W} ${H}`,
     role: "img",
-    "aria-label": `Cumulative ${result.scheme === "kgw" ? "KGW z-score":"SynthID mean-g"} over continuation tokens; threshold ${threshold}. Numeric scores are shown in each sample panel.`
+    "aria-label": `Cumulative detector score over continuation tokens; ${thresholdLabel} ${threshold}. Numeric scores are shown in each sample panel.`
   });
   svg.append(svgNode("title", {}, "Cumulative detector evidence"));
   for (let i = 0; i < 4; i++) {
@@ -333,7 +342,7 @@ function chart() {
     x: W - R,
     y: y(threshold) - 5,
     "text-anchor": "end"
-  }, `threshold ${threshold}`));
+  }, `${thresholdLabel} ${fmt(threshold)}`));
   samples.forEach((s, i) => {
     const pts = s.detector_tokens.map((t, j) => get(t) == null ? null : `${x(j)},${y(get(t))}`).filter(Boolean);
     svg.append(svgNode("polyline", {
@@ -359,3 +368,10 @@ function chart() {
   box.append(svg);
 }
 updateControls();
+fetch("/api/calibrations").then(r => r.json()).then(data => {
+  for (const c of data.calibrations) {
+    const option = node("option", `${c.scheme} ${c.statistic} · FPR ${100*c.target_fpr}% · ${c.id.slice(0,8)}${c.supported ? "" : " · exploratory"}`);
+    option.value = c.id;
+    $("calibration").append(option);
+  }
+}).catch(() => status("Calibration list unavailable; scores remain uncalibrated.", "error"));

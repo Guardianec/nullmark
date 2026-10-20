@@ -46,6 +46,7 @@ class ModelConfig(StrictConfig):
 
 
 class SynthIDConfig(StrictConfig):
+    statistic: Literal["raw_mean", "weighted_mean"] = "raw_mean"
     ngram_len: int = Field(5, ge=2, le=16)
     depth: int = Field(10, ge=1, le=30)
     context_history_size: int = Field(1024, ge=16, le=65536)

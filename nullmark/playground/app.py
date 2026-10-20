@@ -16,10 +16,10 @@ ASSETS = Path(__file__).parent / "static"
 logger = logging.getLogger("nullmark.playground")
 
 
-def create_app() -> FastAPI:
+def create_app(*, keys=None, calibrations=()) -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]"])
-    playground = Playground()
+    playground = Playground(keys=keys, calibrations=calibrations)
 
     @app.middleware("http")
     async def local_boundary(request: Request, call_next):
@@ -82,6 +82,21 @@ def create_app() -> FastAPI:
         except LocalModelError as exc:
             return {"models": [], "status": str(exc)}
 
+    @app.get("/api/calibrations")
+    def calibration_list():
+        return {
+            "calibrations": [
+                {
+                    "id": c.calibration_id,
+                    "scheme": c.scheme,
+                    "statistic": c.statistic,
+                    "target_fpr": c.operating_point.target_fpr,
+                    "supported": c.operating_point.supported,
+                }
+                for c in playground.calibrations.values()
+            ]
+        }
+
     @app.post("/api/generate")
     def generate(settings: PlaygroundSettings):
         if not playground.lock.acquire(blocking=False):
@@ -110,7 +125,9 @@ def create_app() -> FastAPI:
     return app
 
 
-def launch(host: str, port: int) -> None:
+def launch(host: str, port: int, *, keys=None, calibrations=()) -> None:
     import uvicorn
 
-    uvicorn.run(create_app(), host=host, port=port, access_log=False)
+    uvicorn.run(
+        create_app(keys=keys, calibrations=calibrations), host=host, port=port, access_log=False
+    )

@@ -30,7 +30,10 @@ class KGWScheme(WatermarkScheme):
 
     @torch.inference_mode()
     def detect(self, text: str) -> DetectionResult:
-        ids = self.model.encode(text)
+        return self.score_ids(self.model.encode(text))
+
+    @torch.inference_mode()
+    def score_ids(self, ids: list[int]) -> DetectionResult:
         cfg = self.config
         end = next(
             (i for i, token in enumerate(ids) if token in self.model.eos_token_ids), len(ids)

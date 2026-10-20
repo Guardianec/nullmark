@@ -202,9 +202,11 @@ class GGUFBackend:
             processor = watermark.construct_processor(self.vocab_size, self.watermark_device)
         ids, errors = [], []
         calls = 0
+        watermark_seconds = 0.0
 
         def transform(input_ids, scores):
-            nonlocal calls
+            nonlocal calls, watermark_seconds
+            hook_started = perf_counter()
             calls += 1
             try:
                 if len(scores) != self.vocab_size or list(map(int, input_ids)) != prompt_ids + ids:
@@ -227,6 +229,8 @@ class GGUFBackend:
                 safe = np.full(scores.shape, -np.inf, dtype=np.float32)
                 safe[min(self.llm.token_eos(), len(scores) - 1)] = 0
                 return safe
+            finally:
+                watermark_seconds += perf_counter() - hook_started
 
         self.llm.reset()
         self.llm.set_seed(seed)
@@ -261,7 +265,7 @@ class GGUFBackend:
         # Original IDs retain EOG; visible text excludes controls.
         # Detector retokenization remains separate.
         text = self.llm.detokenize(ids, special=False).decode("utf-8", errors="replace")
-        return Generation(text, ids, perf_counter() - started, prompt_ids, calls)
+        return Generation(text, ids, perf_counter() - started, prompt_ids, calls, watermark_seconds)
 
     def close(self) -> None:
         self.llm._sampler = None
