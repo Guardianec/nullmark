@@ -49,6 +49,10 @@ def validate_output(original, output, prompt=""):
         raise ValueError("model commentary or preamble")
     if "</think>" in output or "[im_end]" in output:
         raise ValueError("model control text")
+    if re.search(r"<\|[^>]+\|>|<think>", output, re.I) or re.match(
+        r"\s*#{1,6}\s*(?:rewritten|paraphrased)(?:\s+text|\s+version)?", output, re.I
+    ):
+        raise ValueError("model control text or markdown preamble")
     if len(words(output)) < max(1, len(words(original)) // 2):
         raise ValueError("excessive contraction or truncation")
     return output  # No silent content sanitation.

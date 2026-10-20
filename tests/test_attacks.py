@@ -83,6 +83,8 @@ def test_high_risk_spans_are_protected():
         "```abc```",
         "Sure, abc",
         "<think>abc",
+        "### Rewritten text\nSome prose.",
+        "Some prose <|im_end|>",
         "x" * 1000,
     ],
 )

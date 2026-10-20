@@ -218,6 +218,31 @@ def report(output: Path, metrics):
         ax.legend(fontsize=8)
     fig.savefig(plots / "semantic-vs-score.svg")
     plt.close(fig)
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4), layout="constrained")
+    for ax, scheme in zip(axes, sorted(metrics["baseline"]), strict=True):
+        for attack in sorted({r["attack"] for r in rows}):
+            selected = [
+                r
+                for r in rows
+                if r["scheme"] == scheme
+                and r["attack"] == attack
+                and r["distributions"]["word_edit_fraction"]["mean"] is not None
+            ]
+            ax.plot(
+                [r["distributions"]["word_edit_fraction"]["mean"] * 100 for r in selected],
+                [r["evasion_rate"] for r in selected],
+                marker="o",
+                label=attack,
+            )
+        ax.set(
+            xlabel="Mean actual word edit fraction, completed attacks (%)",
+            ylabel="Evasion / all eligible attempts",
+            title=scheme,
+        )
+        ax.legend(fontsize=8)
+        ax.grid(alpha=0.2)
+    fig.savefig(plots / "actual-edit-vs-evasion.svg")
+    plt.close(fig)
     fig, ax = plt.subplots(figsize=(10, 4), layout="constrained")
     for scheme in sorted(metrics["baseline"]):
         for threshold in ("0.9", "0.95"):
