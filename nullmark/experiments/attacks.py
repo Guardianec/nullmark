@@ -3,6 +3,7 @@
 import hashlib
 import json
 from dataclasses import asdict
+from datetime import UTC, datetime
 from time import perf_counter
 from typing import Literal
 
@@ -101,6 +102,16 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
         (output / "attacks").mkdir()
         for attack in NAMES:
             (output / "attacks" / f"{attack}.jsonl").touch()
+
+    manifest = json.loads((output / "manifest.json").read_text("utf-8"))
+    manifest.setdefault("stage_events", []).append(
+        {
+            "stage": stage,
+            "started_at": datetime.now(UTC).isoformat(),
+            "environment": environment(),
+        }
+    )
+    write_json(output / "manifest.json", manifest)
 
     def scheme_for(model, name):
         scheme = load_scheme(name, model, config, keys.derive(name, 0, config.synthid.depth))
