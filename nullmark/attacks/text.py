@@ -13,6 +13,14 @@ PROTECTED = re.compile(
     r"https?://\S+|[\w.+-]+@[\w.-]+|\$[^$]+\$|\b[A-Z][\w-]*\b|"
     r"\b(?:not|no|never|neither|nor|without|cannot|\w+n't)\b",
 )
+GRAMMAR_WORDS = frozenset(
+    (
+        "that this these those which what where when while with without within from into onto "
+        "about after before because since until unless than then there their they them whose "
+        "whom whether either neither both each every some such very also only just even still "
+        "have has had does doing been being would could should must might shall will"
+    ).split()
+)
 
 
 def words(text):
@@ -41,6 +49,7 @@ def candidates(text):
         if len(m.group()) > 3
         and m.group().isalpha()
         and m.group().islower()
+        and m.group() not in GRAMMAR_WORDS
         and not any(m.start() < end and m.end() > start for start, end in protected)
     ]
 

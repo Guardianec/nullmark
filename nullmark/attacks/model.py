@@ -1,11 +1,13 @@
 """Unwatermarked GGUF transformation-only wrapper. Never constructs a detector."""
 
 import hashlib
-import json
+from difflib import SequenceMatcher
 from pathlib import Path
 
 import numpy as np
 
+from nullmark.attacks.baselines import validate_output
+from nullmark.attacks.text import WORD
 from nullmark.common.runtime import gpu_layers, llama_module
 
 
@@ -84,34 +86,38 @@ class TransformationModel:
     def replacements(self, text, pool, seed):
         identity = (text, seed)
         if identity not in self.analysis:
-            # One linguistic analysis reused across budgets and entropy selection.
-            vocabulary = sorted({m.group() for m in pool})
+            self.analysis[identity] = None  # Cache failed analysis too; never retry per budget.
             raw = self.complete(
-                "Suggest conservative context-aware single-word substitutions for the text. "
-                "Preserve meaning, grammar, tone, factual claims and negations. Only use words "
-                "from the candidate list as JSON keys. Skip ambiguous or unsafe words. "
-                "Each value must be one lowercase word different from its key. "
-                "Return ONLY a JSON object, no markdown.\nCandidates: "
-                + json.dumps(vocabulary)
-                + "\nText:\n"
-                + text,
+                "Copy the following text with local lexical edits. Aim to replace about one "
+                "word in five with natural single-word contextual alternatives, spread across "
+                "the text. Keep each change separated by unchanged words. Make more than one "
+                "edit when safe alternatives exist. Preserve each word's grammatical role "
+                "and inflection, all meaning, "
+                "tone, numbers, names and negations. Do not reorder, insert or delete words. "
+                "Do not alter pronouns, conjunctions or prepositions. If an alternative is "
+                "ambiguous, keep the original. Return only the complete edited text, with "
+                "no explanation, heading or markdown wrapper.\n\n" + text,
                 seed,
             )
-            value = json.loads(raw)
-            if not isinstance(value, dict) or any(
-                not isinstance(k, str) or not isinstance(v, str) for k, v in value.items()
-            ):
-                raise ValueError("invalid contextual alternatives")
+            validate_output(text, raw)
+            original, edited = list(WORD.finditer(text)), list(WORD.finditer(raw))
+            safe = {m.start() for m in pool}
+            value = {}
+            for tag, i, j, k, end in SequenceMatcher(
+                None,
+                [m.group() for m in original],
+                [m.group() for m in edited],
+                autojunk=False,
+            ).get_opcodes():
+                # Isolated substitutions only; phrase restructuring cannot leak into local edits.
+                if tag == "replace" and j - i == end - k == 1:
+                    before, after = original[i], edited[k].group()
+                    if before.start() in safe and after.isalpha() and after.islower():
+                        value[before.start()] = after
             self.analysis[identity] = value
-        value = self.analysis[identity]
-        return {
-            m.start(): value[m.group()]
-            for m in pool
-            if m.group() in value
-            and value[m.group()].isalpha()
-            and value[m.group()].islower()
-            and value[m.group()] != m.group()
-        }
+        if self.analysis[identity] is None:
+            raise ValueError("contextual analysis previously failed")
+        return self.analysis[identity]
 
     def entropies(self, text, pool):
         if text not in self.entropy_cache:

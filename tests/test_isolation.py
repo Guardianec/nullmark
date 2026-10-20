@@ -32,6 +32,7 @@ def test_attacks_cannot_import_evaluator_or_dynamic_import_tools():
         "collections",
         "pathlib",
         "numpy",
+        "difflib",
         "nullmark.attacks.base",
         "nullmark.attacks.text",
         "nullmark.attacks.baselines",

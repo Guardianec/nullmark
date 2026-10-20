@@ -63,7 +63,11 @@ Transformation sampling is temperature 0.2 / top-k 40 / top-p .95, repeat penalt
 watermarked baselines retains the frozen .8 / 40 / .95 configuration and 192-token
 limit. These are different tasks and deliberately separate settings.
 
-Contextual alternatives are computed once per input/seed and reused across budgets
+Qwen proposes a minimally edited contextual copy. Only isolated single-word
+substitutions at protected-safe positions are extracted; phrase restructuring is
+ignored. This keeps proposals grounded in complete grammatical sentences. Grammar
+function words are excluded. It remains a heuristic and can still introduce errors.
+Contextual alternatives (and analysis failures) are computed once per input/seed and reused across budgets
 and entropy selection within a worker. Final outputs use an immutable content-addressed
 cache keyed by the public sample, attack/version/template, seed, requested budget,
 model digest and operational inference settings. Cache contents include an integrity
