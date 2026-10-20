@@ -172,6 +172,9 @@ function TextComparison(data) {
     const article = node("article", null, "comparison-text");
     article.append(node("h3", title));
     const content = node("div", text, "comparison-prose");
+    content.tabIndex = 0;
+    content.setAttribute("role", "region");
+    content.setAttribute("aria-label", title);
     if (text === null) data.diff.forEach(part => {
       if (part.operation === "equal") content.append(document.createTextNode(part.before));
       else {

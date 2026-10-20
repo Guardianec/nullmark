@@ -73,6 +73,10 @@ cache keyed by the public sample, attack/version/template, seed, requested budge
 model digest and operational inference settings. Cache contents include an integrity
 checksum, never detector feedback. Runtime is recorded but is not deterministic.
 Deterministic replay requires the recorded runtime/hardware as well as model and seed.
+Sweep timings are amortized: the first uncached budget pays for linguistic analysis,
+later budgets reuse it, and Entropy Rewrite reuses Local Replacement proposals.
+The first request may also include native model loading. These are measured sweep
+wall times, not independent cold-start costs for each attack/budget.
 
 Output validation rejects empty text, exact prompt echo, excessive expansion or
 contraction, known model commentary/preambles, control tags and truncated model
