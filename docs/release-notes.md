@@ -1,3 +1,26 @@
+# NullMark v0.2.0 — Baseline Attacks
+
+Four keyless, detector-blind baselines now run through an isolated text-only
+subprocess: Random Edit, contextual Local Replacement, one-pass Paraphrase and
+ordinary-entropy Rewrite. A fresh 240-prompt corpus, unchanged frozen evaluators,
+continuous preservation metrics, quality-conditioned accounting, static plots and
+a before/diff/after Playground make the disruption-versus-damage tradeoff visible.
+
+The installed Qwen run used 128 eligible originals per scheme and completed all
+4,096 attempts. Paraphrase evasion was 2/128 KGW and 7/128 SynthID, with separate
+29/128 and 32/128 post-attack abstentions. Sparse attacks had no observed evasion
+and exhausted safe candidates at mean actual editing below 1%; this does not
+establish robustness at 20% actual editing. Semantic similarity is not factual
+correctness. Target FPR 1% remains distinct from the prior SynthID observed
+held-out 3.03% FPR.
+
+[Full measured results](baseline-attack-results.md) ·
+[Methodology](baseline-attacks.md) · [Verification](release-verification.md).
+
+v0.3 Sparse Keyless Disruption has NOT been started.
+
+---
+
 NullMark v0.1.1 adds the **Visual Playground**, a local interactive view of the
 existing watermark generation and detection pipeline.
 

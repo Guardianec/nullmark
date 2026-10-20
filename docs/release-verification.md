@@ -1,3 +1,68 @@
+# v0.2.0 release verification
+
+- v0.1.1 was fast-forwarded to `main` from verified `932622f6d996bc9c35548ed1c3f228909c91752e`,
+  tagged and [released](https://github.com/Guardianec/nullmark/releases/tag/v0.1.1).
+  v0.2 development began from that updated main on `codex/release-v0.2.0`.
+- Local full suite: **204 passed, 1 skipped**. The skipped pinned GPT-2 test also
+  passed separately using the existing offline cache. Ruff lint/format pass.
+- Historical Experiment 001: **all 48 decoded texts and original native token-ID
+  sequences replayed exactly**, with zero failures and unchanged historical YAML.
+- All seven local v0.1.1 calibration file hashes still match the pre-heldout freeze
+  snapshot. Their committed blobs and the generation/detector implementation remain
+  unchanged from the v0.1.1 tag. Frozen detector-v1 compatibility passed through
+  actual KGW and SynthID generation and 4,096 post-attack evaluations. No refitting.
+- Fresh corpus: **240 unique original prompts / eight styles**, with both IDs and
+  normalized text disjoint from the calibration corpus. Actual run: 128 prompts
+  per family, 16/style. **128/128 eligible for KGW and 128/128 for SynthID**.
+- Real installed Qwen benchmark completed: **256 originals / 4,096 completed
+  attack-version-2 attempts / 4,096 unique evaluations and quality records**.
+  All 32 attack/scheme/budget groups retain the full 128-eligible denominator.
+  Attack completion is 100%; no failed/abstained output silently counts as evasion.
+- Paraphrase evasion: **2/128 KGW (1.56%)**, **7/128 SynthID (5.47%)**; post-attack
+  abstention: **29/128 (22.66%)**, **32/128 (25.00%)**, respectively. Every sparse
+  operating point had zero observed evasion. Mean actual sparse edits were below
+  1% because safe proposals exhausted early; requested 20% is not actual 20%.
+- Pin: existing `qwen3.5:9b-q4_K_M`, GGUF `02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d`,
+  llama-cpp-python 0.3.36, local NVIDIA RTX 4070 SUPER. No additional Qwen checkpoint.
+  Optional local semantic evaluator: all-MiniLM-L6-v2 revision
+  `c9745ed1d9f207416be6d2e6f8de32d1f16199bf`, sentence-transformers 3.4.1.
+- **64 fixed comparisons** were inspected across eight styles, four families and
+  both schemes. This is qualitative review by the coding agent, not independently
+  annotated human truth. [Inspection and actual text](baseline-attack-inspection.md)
+  report no-ops, emphasis drift, awkward idioms, added completions, original
+  truncation and source factual errors. Cosine is not factual correctness.
+- All six static research plots were rendered and visually inspected. Shared
+  evasion axes use nonnegative percentages; score units remain separate by scheme.
+  Machine-readable distributions, explicit quality-band denominators, all attempts
+  and Pareto CSV are in the [measured report](baseline-attack-results.md).
+- Browser replay of `kgw:attacks-v1-technical-15`, seed 236290934, reproduced **3.302
+  → 1.731**, threshold **1.960**, semantic **0.980**, word edits **13.7%**, token
+  edits **12.3%**, length ratio **1.012**. [Actual screenshot](images/playground-attacks.jpg).
+  Desktop/tablet/mobile widths 1440/768/390 had no horizontal overflow. Keyboard
+  diff scrolling kept all three panes synchronized. No browser errors/warnings.
+- Wheel/source builds and clean installs were verified, including core offline
+  smoke, installed GUI, subprocess worker and ineligible/uncalibrated states.
+  Replayed resolved configs contain relocatable prompt/evaluator snapshots.
+- Repository/distribution checks exclude private masters, native private artifacts,
+  model weights and inference caches. The worker uses explicit public serialization,
+  isolated Python mode, a temporary cwd and an allowlisted environment; AST/import,
+  denied-private-access, cache-integrity and subprocess regressions pass. It receives
+  no key, key reference, detector result/threshold, calibration path or native state.
+  This remains scientific isolation of reviewed code, not a hostile-code sandbox.
+- CPU/offline GitHub CI tests both Python 3.11 and 3.12 and the separate GUI job;
+  it requires no Qwen/Ollama/embedding downloads. [Release PR](https://github.com/Guardianec/nullmark/pull/2)
+  and [CI history](https://github.com/Guardianec/nullmark/actions) retain final status.
+
+Known limits: one quantized model, one frozen key configuration per family,
+limited actual sparse edit coverage, conservative/near-copy paraphrases, length
+abstention, and imperfect preservation/source quality. The calibration **target FPR
+is 1%**; SynthID's prior **observed held-out FPR is 3/99 (3.03%)**. Neither the
+current benchmark nor the GUI establishes a 1%-population-FPR detector.
+
+**v0.3 Sparse Keyless Disruption has NOT been started.**
+
+---
+
 # v0.1.1 release verification
 
 ## Final detector calibration protocol

@@ -16,6 +16,12 @@
 - CPU/offline smoke fixtures and documentation for local Qwen benchmarking,
   scientific isolation, semantic limitations and reproducibility.
 
+- Real Qwen run: 128/128 eligible originals per scheme, 4,096 completed attempts.
+  Paraphrase evasion 2/128 KGW and 7/128 SynthID; abstentions reported separately.
+  Sparse mean actual edits remain below 1% due to conservative candidate exhaustion.
+- Deterministic 64-comparison qualitative inspection and a real calibrated Qwen
+  Playground replay; measured results and limitations are published in docs.
+
 ## 0.1.1 — 2026-10-20
 
 Final detector calibration pass:

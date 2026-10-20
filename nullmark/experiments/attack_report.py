@@ -163,6 +163,7 @@ def report(output: Path, metrics):
 
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+        from matplotlib.ticker import PercentFormatter
     except ImportError:
         raise ValueError("Static plots require nullmark[evaluation]") from None
     plots = output / "plots"
@@ -192,6 +193,12 @@ def report(output: Path, metrics):
                     label=attack,
                 )
             ax.set(xlabel="Requested word edit budget (%)", ylabel=ylabel, title=scheme)
+            ax.set_xticks([1, 2, 5, 10, 20])
+            if name == "evasion_rate":
+                ax.set_ylim(
+                    0, min(1, max(0.1, max((r["evasion_rate"] for r in rows), default=0) * 1.15))
+                )
+                ax.yaxis.set_major_formatter(PercentFormatter(1))
             ax.legend(fontsize=8)
             ax.grid(alpha=0.2)
         fig.savefig(plots / f"{name}.svg")
@@ -218,7 +225,7 @@ def report(output: Path, metrics):
         ax.legend(fontsize=8)
     fig.savefig(plots / "semantic-vs-score.svg")
     plt.close(fig)
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4), layout="constrained")
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4), layout="constrained", sharex=True, sharey=True)
     for ax, scheme in zip(axes, sorted(metrics["baseline"]), strict=True):
         for attack in sorted({r["attack"] for r in rows}):
             selected = [
@@ -239,6 +246,8 @@ def report(output: Path, metrics):
             ylabel="Evasion / all eligible attempts",
             title=scheme,
         )
+        ax.set_ylim(0, min(1, max(0.1, max((r["evasion_rate"] for r in rows), default=0) * 1.15)))
+        ax.yaxis.set_major_formatter(PercentFormatter(1))
         ax.legend(fontsize=8)
         ax.grid(alpha=0.2)
     fig.savefig(plots / "actual-edit-vs-evasion.svg")
@@ -255,12 +264,23 @@ def report(output: Path, metrics):
             )
     ax.set_xticks(
         range(len(selected)),
-        [f"{r['attack']}\n{r['budget']}" for r in selected],
+        [
+            f"{r['attack']}\n{r['budget'] if r['budget'] is not None else 'actual'}"
+            for r in selected
+        ],
         rotation=65,
         ha="right",
         fontsize=7,
     )
     ax.set(ylabel="Evasion / passing quality subset")
+    conditional = [
+        band["rate"]
+        for r in rows
+        for band in r["quality_conditioned"].values()
+        if band["rate"] is not None
+    ]
+    ax.set_ylim(0, min(1, max(0.1, max(conditional, default=0) * 1.15)))
+    ax.yaxis.set_major_formatter(PercentFormatter(1))
     ax.legend(fontsize=8)
     fig.savefig(plots / "quality-conditioned.svg")
     plt.close(fig)

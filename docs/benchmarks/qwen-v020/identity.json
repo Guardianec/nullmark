@@ -1,0 +1,55 @@
+{
+  "config": {
+    "name": "003-baseline-attacks",
+    "seed": 20261021,
+    "model": {
+      "backend": "ollama-gguf",
+      "name": "qwen3.5:9b-q4_K_M",
+      "revision": "02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d",
+      "device": "cpu",
+      "max_new_tokens": 192,
+      "temperature": 0.8,
+      "top_k": 40,
+      "top_p": 0.95,
+      "threads": 8,
+      "context_length": 2048,
+      "offload": "gpu"
+    },
+    "dataset": {
+      "source": "jsonl",
+      "path": "attacks-v1.jsonl",
+      "sample_count": 128
+    },
+    "calibration_prompts": "../calibration/prompts-v1.jsonl",
+    "calibrations": {
+      "kgw": "../../docs/calibration/qwen-v011/kgw-z_score-fpr-0.01.calibration.json",
+      "synthid": "../../docs/calibration/qwen-v011/synthid-d20-weighted_mean-fpr-0.01.calibration.json"
+    },
+    "kgw": {
+      "greenlist_ratio": 0.25,
+      "bias": 2.5,
+      "context_width": 1,
+      "threshold": 3.0,
+      "ignore_repeated_ngrams": true
+    },
+    "synthid": {
+      "statistic": "weighted_mean",
+      "ngram_len": 5,
+      "depth": 20,
+      "context_history_size": 1024,
+      "sampling_table_size": 65536,
+      "threshold": 0.6
+    },
+    "semantic": true,
+    "attack_offload": "gpu"
+  },
+  "dataset_sha256": "2981103c1cc1cbfdddb8e260654f51350c55c7902bcf1abd2c5725a8ba81ad3c",
+  "calibration_sha256": {
+    "kgw": "73cbc4e410c02160281c7fcae681330dcbcfdd5300829fed38c5f52494e309f1",
+    "synthid": "61c9cce2f01358ed74d5ea0cfa36d373325872ab7b2b75539053d56dee0b7122"
+  },
+  "key_refs": {
+    "kgw": "f8581c930b8d013bf0618850487225af9d7a55299a21a0c636e80d9cee80ac56",
+    "synthid": "e4726d280c08a42b7422004a90504e91ad9c245e211e5668bb85ed0da4a4d013"
+  }
+}
