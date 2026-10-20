@@ -188,6 +188,28 @@ def test_worker_rejects_private_or_unknown_fields():
     assert "failure" in json.loads(run.stdout)
 
 
+def test_worker_timeout_terminates_process_and_its_pipes(monkeypatch):
+    import tempfile
+
+    worker = AttackWorker(timeout=0.05)
+
+    def slow_worker():
+        worker.stderr = tempfile.TemporaryFile()
+        worker.process = subprocess.Popen(
+            [sys.executable, "-c", "import time; time.sleep(10)"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=worker.stderr,
+            text=True,
+            encoding="utf-8",
+        )
+
+    monkeypatch.setattr(worker, "_start", slow_worker)
+    with worker, pytest.raises(RuntimeError, match="timeout"):
+        worker.transform(AttackInput("x", "p", TEXT), attack="random_edit", budget=0.1, seed=1)
+    assert worker.process is None
+
+
 @pytest.mark.parametrize(
     "field,value",
     [("seed", 2), ("budget", 0.2), ("attack", "paraphrase"), ("model", {"model_digest": "a" * 64})],

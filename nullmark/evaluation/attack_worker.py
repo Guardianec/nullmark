@@ -34,6 +34,18 @@ class AttackWorker:
         self.process = None
         self.directory = None
 
+    def _kill(self):
+        # Windows venv launchers can own a second Python process holding the pipes.
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/PID", str(self.process.pid), "/T", "/F"],
+                capture_output=True,
+                check=False,
+                timeout=15,
+            )
+        else:
+            self.process.kill()
+
     def _start(self):
         self.directory = tempfile.TemporaryDirectory(prefix="nullmark-attack-")
         env = {
@@ -101,7 +113,7 @@ class AttackWorker:
             try:
                 line = pending.result(timeout=self.timeout)
             except TimeoutError:
-                self.process.kill()
+                self._kill()
                 raise RuntimeError("attack worker timeout") from None
         response = json.loads(line)
         if "failure" in response:
@@ -128,7 +140,7 @@ class AttackWorker:
             try:
                 self.process.wait(timeout=15)
             except subprocess.TimeoutExpired:
-                self.process.kill()
+                self._kill()
                 self.process.wait()
             self.process.stdout.close()
             self.stderr.close()
