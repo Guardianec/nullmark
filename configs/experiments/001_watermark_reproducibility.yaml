@@ -1,0 +1,21 @@
+name: 001_watermark_reproducibility
+seed: 42
+purpose: smoke
+random_keys: 2
+model:
+  name: openai-community/gpt2
+  revision: 607a30d783dfa663caf39e06633721c8d4cfcd7e
+  device: cpu
+  max_new_tokens: 192
+  threads: 2
+dataset:
+  source: builtin-v1
+  sample_count: 8
+synthid:
+  ngram_len: 5
+  depth: 10
+  threshold: 0.60
+kgw:
+  greenlist_ratio: 0.25
+  bias: 2.5
+  threshold: 3.0

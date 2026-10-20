@@ -1,0 +1,130 @@
+"""Small standard-library CLI; detector commands belong to the trusted evaluator."""
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from pydantic import ValidationError
+
+from nullmark import __version__
+from nullmark.config import load_config
+from nullmark.evaluation.metrics import summary_markdown
+
+
+class CLIError(ValueError):
+    """A user-facing validation message constructed without private input values."""
+
+
+def parser() -> argparse.ArgumentParser:
+    root = argparse.ArgumentParser(
+        prog="nullmark", description="Open text-watermark reproducibility"
+    )
+    root.add_argument("--version", action="version", version=__version__)
+    commands = root.add_subparsers(dest="command", required=True)
+    for command in ("generate", "detect"):
+        sub = commands.add_parser(command, help=f"{command.capitalize()} a local controlled sample")
+        sub.add_argument("--config", type=Path, required=True)
+        sub.add_argument(
+            "--scheme",
+            choices=("none", "synthid", "kgw") if command == "generate" else ("synthid", "kgw"),
+            required=True,
+        )
+        sub.add_argument(
+            "--secrets", type=Path, help="Private master file (required for watermarking)"
+        )
+        sub.add_argument("--key-index", type=int, default=0)
+        if command == "generate":
+            sub.add_argument("--prompt", required=True)
+            sub.add_argument("--seed", type=int, default=42)
+        else:
+            sub.add_argument(
+                "--text-file", type=Path, required=True, help="UTF-8 continuation only"
+            )
+    experiment = commands.add_parser("experiment", help="Run or summarize an experiment")
+    exp_commands = experiment.add_subparsers(dest="experiment_command", required=True)
+    run = exp_commands.add_parser("run", help="Generate both families and paired plain controls")
+    run.add_argument("config", type=Path)
+    run.add_argument("--output", type=Path, help="New output directory; existing paths are refused")
+    run.add_argument(
+        "--secrets", type=Path, help="Replay with a previous run's private master file"
+    )
+    summary = exp_commands.add_parser("summarize", help="Print stored descriptive metrics")
+    summary.add_argument("result", type=Path, help="Run directory or metrics.json")
+    return root
+
+
+def execute(args) -> int:
+    if args.command == "experiment":
+        if args.experiment_command == "summarize":
+            path = args.result / "metrics.json" if args.result.is_dir() else args.result
+            metrics = json.loads(path.read_text("utf-8"))
+            print(summary_markdown(metrics, metrics["purpose"]))
+            return 0
+        from nullmark.experiments.runner import run_experiment
+
+        output = run_experiment(args.config, output=args.output, secrets_path=args.secrets)
+        metrics = json.loads((output / "metrics.json").read_text("utf-8"))
+        print(summary_markdown(metrics, metrics["purpose"]))
+        print(f"Results: {output.resolve()}")
+        return int(bool(metrics["generation_failures"] or metrics["detection_failures"]))
+    if args.key_index < 0:
+        raise CLIError("key-index must be nonnegative")
+    config = load_config(args.config)
+    if args.command == "generate" and not 0 <= args.seed < 2**32:
+        raise CLIError("seed must be in [0, 2**32)")
+    if args.scheme != "none" and args.secrets is None:
+        raise CLIError(
+            "--secrets is required; run a tiny experiment to create a private master file"
+        )
+    from nullmark.evaluation.secrets import KeyStore
+    from nullmark.models import CausalModel
+    from nullmark.watermark.registry import load_scheme
+
+    model = CausalModel(config.model)
+    scheme = None
+    if args.scheme != "none":
+        store = KeyStore.load(args.secrets)
+        scheme = load_scheme(
+            args.scheme,
+            model,
+            config,
+            store.derive(args.scheme, args.key_index, config.synthid.depth),
+        )
+    if args.command == "generate":
+        generated = (
+            scheme.generate(model, args.prompt, seed=args.seed)
+            if scheme
+            else model.generate(args.prompt, seed=args.seed)
+        )
+        sys.stdout.write(generated.text)
+    else:
+        print(
+            json.dumps(scheme.detect(args.text_file.read_text("utf-8")).to_dict(), allow_nan=False)
+        )
+    return 0
+
+
+def main() -> None:
+    args = parser().parse_args()
+    try:
+        code = execute(args)
+    except CLIError as exc:
+        print(f"nullmark: {exc}", file=sys.stderr)
+        code = 2
+    except ValidationError as exc:
+        # Pydantic normally includes input values, including secrets in a malformed private file.
+        locations = [
+            ".".join(map(str, e["loc"])) or "root" for e in exc.errors(include_input=False)
+        ]
+        print(f"nullmark: invalid configuration at {', '.join(locations)}", file=sys.stderr)
+        code = 2
+    except (OSError, ValueError, RuntimeError, KeyError) as exc:
+        # Upstream exceptions may embed private config. Keep terminal errors non-secret.
+        message = str(exc) if isinstance(exc, FileExistsError) else type(exc).__name__
+        print(
+            f"nullmark: {message}. Check paths/configuration and model availability.",
+            file=sys.stderr,
+        )
+        code = 2
+    raise SystemExit(code)

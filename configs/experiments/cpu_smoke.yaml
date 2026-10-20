@@ -1,0 +1,10 @@
+name: cpu_smoke
+seed: 42
+purpose: smoke
+random_keys: 2
+model:
+  name: builtin-tiny
+  max_new_tokens: 128
+dataset:
+  source: builtin-v1
+  sample_count: 2
