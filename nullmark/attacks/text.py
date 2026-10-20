@@ -3,7 +3,7 @@
 import re
 from collections import Counter
 
-WORD = re.compile(r"\b[A-Za-z]+(?:'[A-Za-z]+)?\b")
+WORD = re.compile(r"\b\w+(?:['’]\w+)?\b")
 ANCHOR = re.compile(
     r"https?://[^\s<>]+|[\w.+-]+@[\w.-]+\.[A-Za-z]+|"
     r"\b\d+(?:[.,:/-]\d+)*(?:\s?%)?\b"
@@ -32,13 +32,13 @@ def distance(a, b):
 
 def candidates(text):
     protected = [(m.start(), m.end()) for m in PROTECTED.finditer(text)]
-    # Avoid entire code/formula lines, numbers and hyphenated identifiers.
-    for m in re.finditer(r"(?m)^.*(?:[={}<>]|\d|https?://|@).*$", text):
+    # Formula/code lines are conservatively excluded; a number never excludes a paragraph.
+    for m in re.finditer(r"(?m)^.*[={}<>].*$", text):
         protected.append((m.start(), m.end()))
     return [
         m
         for m in WORD.finditer(text)
-        if len(m.group()) > 3
+        if len(m.group()) > 3 and m.group().isalpha()
         and m.group().islower()
         and not any(m.start() < end and m.end() > start for start, end in protected)
     ]

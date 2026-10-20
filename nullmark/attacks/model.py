@@ -23,6 +23,11 @@ class TransformationModel:
             "top_p": 0.95,
             "max_tokens": 768,
             "enable_thinking": False,
+            "repeat_penalty": 1.0,
+            "min_p": 0.0,
+            "backend_version": api.__version__,
+            "context_length": 4096,
+            "chat_template_sha256": None,
         }
         self.llm = api.Llama(
             model_path=str(path),
@@ -36,6 +41,7 @@ class TransformationModel:
             verbose=False,
         )
         template = self.llm.metadata["tokenizer.chat_template"]
+        self.sampling["chat_template_sha256"] = hashlib.sha256(template.encode()).hexdigest()
         self.formatter = api.llama_chat_format.Jinja2ChatFormatter(
             template,
             eos_token=self.llm.detokenize([self.llm.token_eos()]).decode(),
@@ -117,7 +123,7 @@ class TransformationModel:
             scores = self.llm.scores[: len(ids)]
             result = {}
             for m in pool:
-                index = len(self.tokenize(text[: m.start()])) - 1
+                index = len(self.tokenize(text[: m.start()].rstrip())) - 1
                 if index < 0:
                     result[m.start()] = 0.0
                     continue

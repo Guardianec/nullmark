@@ -26,6 +26,7 @@ class AttackOutput:
     actual_token_edits: int
     runtime_seconds: float
     warnings: list[str] = field(default_factory=list)
+    token_metric: str = "regex lexical tokens; trusted evaluator reports generation-model edits"
 
 
 class TextTransform(Protocol):

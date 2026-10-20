@@ -49,6 +49,8 @@ def validate_output(original, output, prompt=""):
         raise ValueError("model commentary or preamble")
     if "</think>" in output or "[im_end]" in output:
         raise ValueError("model control text")
+    if len(words(output)) < max(1, len(words(original)) // 2):
+        raise ValueError("excessive contraction or truncation")
     return output  # No silent content sanitation.
 
 
@@ -113,4 +115,7 @@ class BaselineAttack:
             distance(tokenize(sample.text), tokenize(text)),
             perf_counter() - start,
             notes,
+            "attack GGUF retokenization"
+            if self.model
+            else "regex lexical tokens; trusted evaluator reports generation-model edits",
         )
