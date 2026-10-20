@@ -2,7 +2,7 @@
 
 **Measuring the Minimum Semantic Edit Required to Break Keyed LLM Watermarks**
 
-Current release: **v0.1.0 — reproducibility foundation**.
+Current release: **v0.1.1 — Visual Playground**.
 
 NullMark is a research benchmark for the robustness of open generative-text
 watermarks. Version 0.1 establishes reproducible generation, detection, paired
@@ -45,6 +45,35 @@ This uses a tiny, random-weight GPT-2 architecture and an internal 512-token
 vocabulary. Its output is synthetic word sequences, **not ordinary language**.
 It exercises the real Transformers watermark processors and detectors without
 downloading weights. Use pretrained GPT-2 for actual language generation.
+
+## Visual Playground
+
+Install the optional local interface and launch it:
+
+```sh
+pip install -e ".[gui]"
+nullmark playground
+```
+
+Open **http://127.0.0.1:8765**. FastAPI and Uvicorn serve a small, bundled
+HTML/CSS/JavaScript interface; no Node.js, cloud API, telemetry or external web
+assets are required. The core CLI works without the GUI extra.
+
+Choose **builtin-tiny** for an offline software demonstration (random weights,
+synthetic words), or pinned **GPT-2** for natural-language continuations (first use
+may download weights). Explore **None**, **KGW**, and **SynthID**; compare plain and
+watermarked generation with the same seed; select tokens or step through context
+and watermark state. KGW shows green/red membership and cumulative z-scores;
+SynthID shows depth g-values and cumulative mean-g, explicitly **uncalibrated**.
+Detector scores are statistical evidence, never proof of authorship.
+
+![NullMark Visual Playground with paired GPT-2 generation](docs/images/playground-kgw.jpg)
+
+**CLI = authoritative reproducible experiment workflow.**
+**GUI = interactive exploration and demonstration.**
+See [the playground guide](docs/playground.md) for interpretation, hidden-key
+lifetime, detector caveats and local-server security. The next research milestone
+remains **v0.2 — Baseline Attacks**.
 
 ## Reproducing Experiment 001
 
@@ -125,7 +154,7 @@ results/<experiment>/<run>/       # or the explicit --output directory
   prompts.jsonl                  # original selected prompts
   manifest.json                 # model/tokenizer revision, dataset hash, environment
   public_samples.jsonl           # ONLY sample_id, prompt, text; attacker input
-  generation.jsonl               # evaluator provenance, labels, seeds, key hashes, lengths
+  generation.jsonl               # evaluator provenance, labels, seeds, opaque key references, lengths
   evaluation.jsonl               # evaluator scores and predictions; never blind-attack input
   failures.jsonl                 # stage and exception type; no exception contents
   metrics.json                   # pooled/per-key descriptive statistics
@@ -150,13 +179,14 @@ generation algorithms:
 | Family | Generation | Detection |
 | --- | --- | --- |
 | SynthID-Text | `SynthIDTextWatermarkingConfig` | HF reference g-values, context/EOS masks, reference mean statistic |
-| KGW-style | `WatermarkingConfig`, `lefthash` | HF `WatermarkDetector`, unique n-grams by default |
+| KGW-style | `WatermarkingConfig`, `lefthash` | HF `WatermarkDetector`, HF n-gram scorer; see caveat below |
 
 SynthID varies the key at each depth and the sampling-table seed; KGW varies the
 hashing key. Context sizes, thresholds and other public parameters are configured
 in YAML. SynthID uses a mean-g threshold of 0.60 by default; it is uncalibrated,
 not a probability, and has no claimed p-value or target false-positive rate.
-NullMark does not use an untrained Bayesian detector. KGW reports a z-score and
+NullMark does not use an untrained Bayesian detector. The pinned KGW detector
+currently counts repeated n-grams separately despite its unique-n-gram option (see the playground guide). KGW reports a z-score and
 one-sided normal-approximation p-value (computed with `erfc`); that approximation
 does not establish empirical calibration. Key derivation is for experimental
 separation, not a claim of cryptographic security for the upstream schemes.
@@ -197,7 +227,8 @@ under their own upstream license.
 
 The finite roadmap is:
 
-- **v0.1 — Reproducibility** (this release)
+- **v0.1 — Reproducibility** ✅
+- **v0.1.1 — Visual Playground** (maintenance/usability release)
 - **v0.2 — Baseline Attacks**
 - **v0.3 — Sparse Keyless Disruption (SKD)**
 - **v0.4 — Cross-key and cross-watermark generalization**
@@ -205,4 +236,4 @@ The finite roadmap is:
 - **v1.0 — Research-quality release**
 
 No baseline edits, paraphrasing, SKD, MDB optimization, learned attacks, commercial
-API tests, or dashboard are implemented in v0.1.
+API tests, or attack dashboard are implemented in v0.1.1.

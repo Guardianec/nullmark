@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NullMark · Visual Playground</title>
+<link rel="stylesheet" href="/assets/style.css">
+<script src="/assets/app.js" defer>
+</script>
+</head>
+<body>
+<header>
+<a class="brand" href="/" aria-label="NullMark home">
+<span class="mark">N<span>↗</span>
+</span>NullMark<span class="version">0.1.1</span>
+</a>
+<span class="header-label">VISUAL PLAYGROUND</span>
+<span class="local">
+<i>
+</i> Local inference</span>
+</header>
+<div class="workspace">
+<aside>
+<form id="settings">
+<div class="section-title">
+<span>01 / SETUP</span>
+<span>↘</span>
+</div>
+<label for="model">Language model</label>
+<select id="model">
+<option value="builtin-tiny">builtin-tiny · offline</option>
+<option value="gpt2">GPT-2 · pretrained</option>
+</select>
+<p id="model-note" class="note">Fast, offline random-weight model. Synthetic word sequences; software demonstration only.</p>
+<div class="row">
+<div>
+<label for="device">Device</label>
+<select id="device">
+<option value="cpu">CPU</option>
+<option value="cuda">CUDA</option>
+</select>
+</div>
+<div>
+<label for="length">New tokens</label>
+<input id="length" type="number" min="16" max="512" value="128" required>
+</div>
+</div>
+<div class="row">
+<div>
+<label for="seed">Sampling seed</label>
+<input id="seed" type="number" min="0" max="4294967295" value="42" required>
+</div>
+<div>
+<label for="temperature">Temperature</label>
+<input id="temperature" type="number" min="0.05" max="5" step="0.05" value="1" required>
+</div>
+</div>
+<div class="section-title separated">
+<span>02 / WATERMARK</span>
+<span>⌁</span>
+</div>
+<label for="scheme">Scheme</label>
+<select id="scheme">
+<option value="none">None · plain generation</option>
+<option value="kgw" selected>KGW · greenlist bias</option>
+<option value="synthid">SynthID · tournament sampling</option>
+</select>
+<div id="kgw-settings" class="parameters">
+<div class="row">
+<div>
+<label for="ratio">Greenlist ratio</label>
+<input id="ratio" type="number" min="0.01" max="0.99" step="0.01" value="0.25" required>
+</div>
+<div>
+<label for="bias">Bias</label>
+<input id="bias" type="number" min="0.1" max="10" step="0.1" value="2.5" required>
+</div>
+</div>
+<div class="row">
+<div>
+<label for="context">Context width</label>
+<input id="context" type="number" min="1" max="8" value="1" required>
+</div>
+<div>
+<label for="kgw-threshold">z threshold</label>
+<input id="kgw-threshold" type="number" min="0.1" step="0.1" value="3" required>
+</div>
+</div>
+</div>
+<div id="synthid-settings" class="parameters" hidden>
+<div class="row">
+<div>
+<label for="ngram">N-gram length</label>
+<input id="ngram" type="number" min="2" max="16" value="5" required>
+</div>
+<div>
+<label for="depth">Depth</label>
+<input id="depth" type="number" min="1" max="30" value="10" required>
+</div>
+</div>
+<div class="row">
+<div>
+<label for="history">Context history</label>
+<input id="history" type="number" min="16" max="65536" value="1024" required>
+</div>
+<div>
+<label for="synthid-threshold">Mean-g threshold</label>
+<input id="synthid-threshold" type="number" min="0.51" max="0.99" step="0.01" value="0.60" required>
+</div>
+</div>
+<p class="note">Mean-g is uncalibrated. This threshold does not establish a false-positive rate.</p>
+</div>
+<div id="key-settings">
+<div class="key-row">
+<div>
+<label for="key-index">Hidden key index</label>
+<input id="key-index" type="number" min="0" max="999" value="0" required>
+</div>
+<button id="fresh" type="button" class="secondary">↻ Fresh key</button>
+</div>
+<p class="note" id="key-note">Private configuration stays in this process. Reuse it to repeat a generation.</p>
+</div>
+<label class="check">
+<input id="paired" type="checkbox" checked> Compare plain vs watermarked</label>
+<button id="generate" type="submit" class="primary">Generate continuation <span>↗</span>
+</button>
+<p class="note">Same prompt, model and sampling seed. No cloud API. GPT-2 may download on first use.</p>
+</form>
+<div class="aside-footer">REPRODUCIBILITY → EXPLORATION<br>
+<span>Experiments remain in the CLI.</span>
+</div>
+</aside>
+<main>
+<div class="intro">
+<div>
+<div class="eyebrow">A LOCAL WATERMARK LABORATORY</div>
+<h1>See the signal in the text.</h1>
+<p>Explore how a hidden key shapes sampling—and how evidence accumulates.</p>
+</div>
+<span class="edition">RESEARCH TOOL<br>GENERATION / DETECTION</span>
+</div>
+<section class="prompt-panel">
+<label for="prompt">Prompt <span>CONTINUATION ONLY IS SCORED</span>
+</label>
+<textarea id="prompt" form="settings" rows="2" maxlength="16000" required>The history of public libraries begins with</textarea>
+</section>
+<div id="status" class="status" role="status" aria-live="polite">Ready. Choose a scheme and generate your first sample.</div>
+<section id="results" aria-label="Generation results">
+<div class="output-heading">
+<h2>Generated continuations</h2>
+<div id="legend" class="legend">
+<span class="green-dot">G · green</span>
+<span class="red-dot">R · red</span>
+<span>— · unscored</span>
+</div>
+</div>
+<div class="outputs" id="outputs">
+<article class="sample empty">
+<div class="sample-head">
+<h3>Plain control</h3>
+<span>NO BIAS</span>
+</div>
+<div class="empty-content">
+<span class="empty-icon">Aa</span>
+<h3>One seed. Two sampling paths.</h3>
+<p>Your plain continuation will appear here.</p>
+</div>
+</article>
+<article class="sample empty">
+<div class="sample-head">
+<h3>Watermarked</h3>
+<span>KEYED SAMPLING</span>
+</div>
+<div class="empty-content">
+<span class="empty-icon">⌁</span>
+<h3>A statistical signal, visible.</h3>
+<p>Generate to inspect each token and its watermark state.</p>
+</div>
+</article>
+</div>
+<p id="comparison" class="comparison">A watermark changes sampling preferences; it adds no visible symbols. Alignment can drift after the first changed sample.</p>
+<div class="analysis-grid">
+<section class="panel detection">
+<div class="panel-heading">
+<h2>Evidence over tokens</h2>
+<span id="chart-label">DETECTOR TRACE</span>
+</div>
+<div id="chart" class="chart">
+<p class="chart-empty">The detector trace will appear after generation.</p>
+</div>
+<div class="chart-key">
+<span>━ Watermarked</span>
+<span>┄ Plain</span>
+<span>┄ Threshold</span>
+</div>
+<p id="detector-note" class="note">The trace scores retokenized continuation text, excluding the prompt. Detection is evidence, never proof of authorship.</p>
+</section>
+<section class="panel inspector">
+<div class="panel-heading">
+<h2>Token inspector</h2>
+<span id="source-label">GENERATION CONTEXT</span>
+</div>
+<div class="stepper">
+<button id="prev" type="button" aria-label="Previous token" disabled>←</button>
+<span id="position">— / —</span>
+<button id="next" type="button" aria-label="Next token" disabled>→</button>
+</div>
+<div id="inspection" class="inspection-empty">Select a token to examine its context and watermark state.</div>
+</section>
+</div>
+</section>
+<footer>
+<span>NullMark / Visual Playground</span>
+<span>Exploration, not a robustness benchmark. No attack algorithms.</span>
+</footer>
+</main>
+</div>
+</body>
+</html>

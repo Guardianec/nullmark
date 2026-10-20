@@ -42,12 +42,7 @@ class KGWScheme(WatermarkScheme):
             return DetectionResult(
                 None, None, cfg.threshold, "z_score", 0, status="insufficient_text"
             )
-        detector = WatermarkDetector(
-            model_config=self.model.model.config,
-            device=self.model.settings.device,
-            watermarking_config=self.generation_config(),
-            ignore_repeated_ngrams=cfg.ignore_repeated_ngrams,
-        )
+        detector = self.detector()
         tensor = torch.tensor([ids], dtype=torch.long, device=self.model.settings.device)
         result = detector(tensor, z_threshold=cfg.threshold, return_dict=True)
         score = float(result.z_score[0])
@@ -59,6 +54,14 @@ class KGWScheme(WatermarkScheme):
             "z_score",
             int(result.num_tokens_scored[0]),
             erfc(score / sqrt(2)) / 2,
+        )
+
+    def detector(self) -> WatermarkDetector:
+        return WatermarkDetector(
+            model_config=self.model.model.config,
+            device=self.model.settings.device,
+            watermarking_config=self.generation_config(),
+            ignore_repeated_ngrams=self.config.ignore_repeated_ngrams,
         )
 
     def metadata(self) -> dict:

@@ -39,7 +39,7 @@ def test_private_keys_replay_and_public_seed_does_not_define_them(tmp_path, keys
         assert keys.derive(name, 0) == replay.derive(name, 0)
         assert keys.derive(name, 0) != keys.derive(name, 1)
         assert keys.derive(name, 0) != KeyStore.create().derive(name, 0)
-        assert len(key_reference(keys.derive(name, 0))) == 64
+        assert len(key_reference(keys, name, 0)) == 64
     assert keys.master.hex() not in repr(keys)
     with pytest.raises(FileExistsError):
         keys.save(path)

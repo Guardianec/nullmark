@@ -1,4 +1,62 @@
-# v0.1.0 release verification
+# v0.1.1 release verification
+
+Verified 2026-10-20 on Windows x86-64, Python 3.12.8, PyTorch 2.6.0+cpu,
+Transformers 4.57.6, FastAPI 0.115.14, Starlette 0.46.2 and Uvicorn 0.34.3.
+
+- Full suite: **73 passed, 1 skipped**. The opt-in pretrained test also **passed** separately.
+  One upstream Starlette/AnyIO deprecation warning does not affect the result.
+- Ruff lint, formatting and diff whitespace checks passed.
+- Wheel and source distribution built with isolated build environments. Both
+  contain the fixed playground assets and exclude private files/models/caches.
+- A newly created `.venv-v011` installed the wheel with CPU core dependencies.
+  From outside the source directory, the installed package reported 0.1.1,
+  CLI help worked, and playground launch without FastAPI printed the clean
+  optional-dependency install hint. Dependency compatibility check passed.
+- The installed core CLI ran the offline smoke experiment: 12 samples,
+  no generation/detection failures or abstentions. These are software checks,
+  not statistically powered watermark results.
+- After installing the wheel's `[gui,gui-test]` extras, the installed app's main
+  route, fixed assets and all three offline generation endpoints passed.
+- Master-bound key-reference regressions include different masters producing
+  the same forced small KGW integer but different opaque references. Existing
+  export-isolation/replay tests remain intact.
+- Token inspection tests compare full and prefix cumulative traces against
+  existing detectors, including repeated n-grams, context widths, SynthID depths,
+  short text, special tokens and retokenization differences. No logits are invented.
+- Browser verification exercised builtin-tiny None/KGW/SynthID, paired output,
+  fresh hidden key/index, token selection/stepper and charts. Pinned pretrained
+  GPT-2 was also generated in all three modes. A separate GPT-2 service check
+  confirmed detector-token counts and final cumulative scores for both paired
+  samples. Weights came from the existing local pinned cache, without cloud APIs.
+- A naturally one-token GPT-2 output displayed `insufficient_text` in both
+  paired panels and an informative chart state. Unavailable CUDA displayed a
+  controlled inline error. Backend tests cover malformed settings, oversized
+  requests, model/context failures, concurrent requests and sanitized errors.
+- Desktop/tablet/narrow browser widths (1440/768/390) were visually inspected;
+  no horizontal page overflow at 390px. Browser console checks found no errors
+  or warnings. Screenshots: `docs/images/playground-kgw.jpg` and
+  `docs/images/playground-synthid.jpg`, approximately 236 KB each.
+- CI retains separate core Python 3.11/3.12 jobs without GUI extras and adds
+  one offline GUI smoke job. Actual commit status is available on
+  [GitHub Actions](https://github.com/Guardianec/nullmark/actions).
+
+The Windows sandbox cannot complete asyncio's loopback socket-pair setup, so
+server and GUI tests ran with local networking allowed. Headroom stored the
+source excerpt but its configured compression proxy was unreachable; focused
+source reads were used. No guarantee of automatic traffic compression is made.
+
+Known limits: CPU only was verified; SynthID is uncalibrated; no recorded
+generation logits/probabilities, persistent GUI keys, run-folder browser or attack
+algorithms. Pinned HF's repeated KGW tensor n-grams count separately despite its
+unique-n-gram option; the existing detector is preserved and the trace matches it.
+Old v0.1.0 fingerprints need replacement/affected-master rotation where secrecy
+matters. See [playground](playground.md) for the local security and score model.
+
+Next milestone: **v0.2 — Baseline Attacks**. It was not started.
+
+---
+
+# v0.1.0 release verification (historical)
 
 Local verification date: 2026-10-20. Windows x86-64, Python 3.12.8,
 PyTorch 2.6.0+cpu and Transformers 4.57.6. No GPU or commercial API was used.

@@ -13,6 +13,9 @@ it does not vendor their processor or detector source files.
 | Tokenizers | https://github.com/huggingface/tokenizers | Apache-2.0; imported through Transformers' dependency for offline tokenizer |
 | Pydantic | https://github.com/pydantic/pydantic | MIT; config validation |
 | PyYAML | https://github.com/yaml/pyyaml | MIT; YAML parsing |
+| FastAPI | https://github.com/fastapi/fastapi | MIT; optional local GUI server |
+| Starlette | https://github.com/encode/starlette | BSD-3-Clause; optional ASGI routing/middleware |
+| Uvicorn | https://github.com/encode/uvicorn | BSD-3-Clause; optional local ASGI serving |
 
 Copyright in Transformers' watermarking modules belongs to their upstream
 contributors, including Hugging Face and Google DeepMind; the original KGW authors

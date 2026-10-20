@@ -23,6 +23,9 @@ def parser() -> argparse.ArgumentParser:
     )
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
+    playground = commands.add_parser("playground", help="Launch the local Visual Playground")
+    playground.add_argument("--host", choices=("127.0.0.1", "localhost"), default="127.0.0.1")
+    playground.add_argument("--port", type=int, default=8765)
     for command in ("generate", "detect"):
         sub = commands.add_parser(command, help=f"{command.capitalize()} a local controlled sample")
         sub.add_argument("--config", type=Path, required=True)
@@ -56,6 +59,19 @@ def parser() -> argparse.ArgumentParser:
 
 
 def execute(args) -> int:
+    if args.command == "playground":
+        if not 1 <= args.port <= 65535:
+            raise CLIError("port must be between 1 and 65535")
+        try:
+            from nullmark.playground.app import launch
+        except ImportError:
+            raise CLIError(
+                "The Visual Playground requires optional GUI dependencies. "
+                'Install with: pip install "nullmark[gui]" (checkout: pip install -e ".[gui]")'
+            ) from None
+        print(f"NullMark Visual Playground: http://{args.host}:{args.port}", flush=True)
+        launch(args.host, args.port)
+        return 0
     if args.command == "experiment":
         if args.experiment_command == "summarize":
             path = args.result / "metrics.json" if args.result.is_dir() else args.result

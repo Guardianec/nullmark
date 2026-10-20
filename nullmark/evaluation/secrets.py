@@ -52,5 +52,9 @@ class KeyStore:
         raise ValueError(f"unknown watermark scheme: {scheme}")
 
 
-def key_reference(secret: dict) -> str:
-    return hashlib.sha256(json.dumps(secret, sort_keys=True).encode()).hexdigest()
+def key_reference(store: KeyStore, scheme: str, index: int) -> str:
+    """Opaque configuration identity, independent of low-entropy derived material."""
+    if scheme not in {"kgw", "synthid"} or index < 0:
+        raise ValueError("invalid key reference scheme or index")
+    label = f"nullmark-v1/key-ref/{scheme}/{index}".encode()
+    return hmac.new(store.master, label, hashlib.sha256).hexdigest()

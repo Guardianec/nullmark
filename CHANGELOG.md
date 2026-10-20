@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.1 — 2026-10-20
+
+Visual Playground (maintenance/usability insertion):
+
+- Optional localhost FastAPI interface; bundled assets, no Node.js or cloud API.
+- Cached builtin-tiny and pinned GPT-2; None, KGW and SynthID generation.
+- Same-seed plain/marked comparison, divergence marker, token inspector and stepper.
+- Shared typed KGW membership and SynthID depth g-values; cumulative detector traces.
+- Explicit insufficient-text, retokenization and uncalibrated-score states.
+- Replace direct secret fingerprints with domain-separated, master-bound HMAC references.
+  Watermark key derivation stays unchanged; v0.1.0 public fingerprints require replacement.
+- Regression tests, optional GUI CI and clean installation verification.
+- Document pinned HF KGW repeated-n-gram counting behavior without changing the detector.
+
+No attack algorithms were implemented. Next: **v0.2 — Baseline Attacks**.
+
 ## 0.1.0 — 2026-10-20
 
 Reproducibility foundation:

@@ -145,10 +145,7 @@ def run(
                 )
                 for name in SCHEMES
             }
-            refs = {
-                name: key_reference(keys.derive(name, index, config.synthid.depth))
-                for name in SCHEMES
-            }
+            refs = {name: key_reference(keys, name, index) for name in SCHEMES}
             for prompt in prompts:
                 seed = sample_seed(config.seed, prompt.id, index)
                 for name in ("none", *SCHEMES):

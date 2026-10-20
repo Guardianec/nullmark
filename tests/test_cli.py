@@ -14,9 +14,23 @@ def cli(*args):
 
 def test_cli_help_and_version():
     assert cli("--help").returncode == 0
-    assert "0.1.0" in cli("--version").stdout
+    assert "0.1.1" in cli("--version").stdout
     assert cli("experiment", "run", "--help").returncode == 0
     assert cli("detect", "--help").returncode == 0
+
+
+def test_playground_optional_dependency_message(monkeypatch):
+    import sys
+
+    import pytest
+
+    from nullmark.cli import CLIError, execute, parser
+
+    monkeypatch.setitem(sys.modules, "nullmark.playground.app", None)
+    args = parser().parse_args(["playground"])
+    assert args.host == "127.0.0.1" and args.port == 8765
+    with pytest.raises(CLIError, match=r"pip install.*nullmark\[gui\]"):
+        execute(args)
 
 
 def test_malformed_yaml_is_reported_without_input_values(tmp_path):

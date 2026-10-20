@@ -34,6 +34,17 @@ class SynthIDScheme(WatermarkScheme):
             return DetectionResult(
                 None, None, cfg.threshold, "mean_g", 0, status="insufficient_text"
             )
+        values, mask = self.scoring_data(ids)
+        count = int(mask.sum().item())
+        if count == 0:
+            return DetectionResult(
+                None, None, cfg.threshold, "mean_g", 0, status="insufficient_text"
+            )
+        # Reference mean statistic: sum of unmasked g-values / (depth * unmasked contexts).
+        score = float(values[mask].float().mean().item())
+        return DetectionResult(score, score > cfg.threshold, cfg.threshold, "mean_g", count)
+
+    def scoring_data(self, ids: list[int]) -> tuple[torch.Tensor, torch.Tensor]:
         processor = self.generation_config().construct_processor(
             self.model.model.config.vocab_size,
             self.model.settings.device,
@@ -43,15 +54,10 @@ class SynthIDScheme(WatermarkScheme):
         mask = processor.compute_context_repetition_mask(tensor)
         eos = self.model.tokenizer.eos_token_id
         if eos is not None:
-            mask &= processor.compute_eos_token_mask(tensor, eos)[:, cfg.ngram_len - 1 :].bool()
-        count = int(mask.sum().item())
-        if count == 0:
-            return DetectionResult(
-                None, None, cfg.threshold, "mean_g", 0, status="insufficient_text"
-            )
-        # Reference mean statistic: sum of unmasked g-values / (depth * unmasked contexts).
-        score = float(values[mask].float().mean().item())
-        return DetectionResult(score, score > cfg.threshold, cfg.threshold, "mean_g", count)
+            mask &= processor.compute_eos_token_mask(tensor, eos)[
+                :, self.config.ngram_len - 1 :
+            ].bool()
+        return values, mask
 
     def metadata(self) -> dict:
         return {

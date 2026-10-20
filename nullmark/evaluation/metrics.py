@@ -76,7 +76,7 @@ def summary_markdown(metrics: dict, purpose: str) -> str:
         return "n/a" if value is None else f"{value:.1%}"
 
     lines = [
-        f"# NullMark v0.1.0 — {purpose} results",
+        f"# NullMark v0.1.1 — {purpose} results",
         "",
         "Small runs are descriptive checks, not research-scale evidence.",
         "",

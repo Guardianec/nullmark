@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nullmark"
-version = "0.1.0"
+version = "0.1.1"
 description = "Reproducible, key-isolated experiments for open text watermarks"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,6 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<9", "ruff==0.14.14", "build>=1,<2"]
+gui = ["fastapi>=0.115.14,<0.116", "uvicorn>=0.34.3,<0.35"]
+gui-test = ["httpx>=0.28,<1"]
 
 [project.scripts]
 nullmark = "nullmark.cli:main"

@@ -33,9 +33,19 @@ A public seed controls sampling; it never controls key generation. A private,
 OS-random 256-bit master is domain-separated through HMAC-SHA256 by scheme,
 key index, and SynthID depth/table parameter. The first 32 digest bits, plus one,
 form an upstream-compatible positive integer parameter. These values are not
-claims about cryptographic security of the upstream watermark. Key references
-are SHA-256 digests of canonical private configuration; plaintext keys are not
-written to exported experiment rows. The local master suffices to regenerate
+claims about cryptographic security of the upstream watermark. Since v0.1.1,
+key references
+are HMAC-SHA256(master, "nullmark-v1/key-ref/<scheme>/<index>"). They identify a
+master/scheme/index configuration without hashing low-entropy derived keys.
+Publishing a direct hash of a KGW integer, as v0.1.0 did, enables offline guess
+verification. The new references are stable under master reuse and separated by
+scheme and index; they do not expose an oracle for guessed derived integers.
+This assumes a private high-entropy master and does not strengthen upstream
+watermark security. References identify key slots, not public parameter settings;
+retain public configuration alongside them. Existing published v0.1.0 fingerprints
+cannot be made safe retroactively: replace those artifacts and rotate affected
+masters if key secrecy matters. Plaintext keys are not written to exported rows.
+The local master suffices to regenerate
 them under the versioned `nullmark-v1` derivation.
 
 Save the private master to replay a run. Publishing the master or all run files
@@ -66,7 +76,12 @@ random parameters. Experiments on texts of different lengths need length-aware
 calibration on independent controls.
 
 KGW uses Transformers' `lefthash` green-list bias and corresponding detector;
-repeated n-grams are counted once by default. Its nominal z-score uses the
+the unique-n-gram option is enabled by default. Inspection in v0.1.1 found
+that pinned HF 4.57.6 uses tensor identities in its frequency counter, so repeated
+n-grams actually count separately. This maintenance release preserves the v0.1
+detector and reports its actual behavior; the playground trace matches that
+behavior. Do not infer independent evidence from repeated text. Its nominal
+z-score uses the
 configured green-list ratio. Vocabulary partition sizes are rounded down by the
 reference implementation, so that nominal ratio is approximate on small
 vocabularies. We compute its upper-tail normal p-value with the standard library
@@ -125,3 +140,12 @@ These are evaluation requirements for future work, not implemented attack featur
   https://github.com/huggingface/transformers/tree/v4.57.6/src/transformers/generation
 - GPT-2 model card and license:
   https://huggingface.co/openai-community/gpt2
+
+## Trusted visualization (v0.1.1)
+
+The local playground consumes typed inspection data in `nullmark.evaluation`.
+It is trusted researcher/evaluator tooling with access to hidden keys and detector
+feedback, never an attack interface or blind attacker input. It does not execute
+transformations or benchmark suites. Generation-context token views and the
+retokenized continuation-only detector trace are explicitly separate. The CLI
+remains authoritative for replayable experiments. See [playground](playground.md).
