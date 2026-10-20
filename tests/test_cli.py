@@ -14,7 +14,7 @@ def cli(*args):
 
 def test_cli_help_and_version():
     assert cli("--help").returncode == 0
-    assert "0.1.1" in cli("--version").stdout
+    assert cli("--version").stdout.strip() == "0.2.0"
     assert cli("experiment", "run", "--help").returncode == 0
     assert cli("detect", "--help").returncode == 0
 

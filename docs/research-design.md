@@ -1,4 +1,8 @@
-# Research design — v0.1
+# Research design — historical foundations
+
+The v0.1/v0.1.1 design below is retained for historical interpretation.
+For the implemented v0.2 threat model, subprocess boundary, four baseline attacks
+and quality-aware evaluation, see [Baseline attacks](baseline-attacks.md).
 
 NullMark asks how a keyed open text watermark behaves under controlled generation
 and, in later milestones, meaning-preserving edits. The first release validates
