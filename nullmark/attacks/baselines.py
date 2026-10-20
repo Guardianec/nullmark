@@ -8,7 +8,7 @@ from time import perf_counter
 from nullmark.attacks.base import AttackOutput
 from nullmark.attacks.text import anchors, candidates, distance, words
 
-VERSION = "1"
+VERSION = "2"
 TEMPLATE = "baseline-prose-v1"
 NAMES = ("random_edit", "synonym_replace", "paraphrase", "entropy_rewrite")
 # Conservative alternatives; selection is uniformly shuffled, never scored.
@@ -24,19 +24,14 @@ ALTERNATIVES = {
     "usually": "generally",
     "different": "distinct",
     "allows": "permits",
-    "helps": "assists",
     "begin": "start",
-    "finish": "complete",
     "however": "nevertheless",
     "therefore": "thus",
     "because": "since",
     "method": "approach",
     "methods": "approaches",
     "shows": "demonstrates",
-    "provide": "supply",
     "reduce": "decrease",
-    "increase": "raise",
-    "carefully": "cautiously",
 }
 
 

@@ -63,6 +63,12 @@ def test_paraphrase_has_no_fixed_budget():
         BaselineAttack("paraphrase", 0.05)
 
 
+def test_random_edit_avoids_noun_verb_and_complement_ambiguity():
+    text = "Applying coats of finish helps prevent damage as temperatures increase."
+    result = BaselineAttack("random_edit", 0.2).transform(AttackInput("x", "p", text), seed=9)
+    assert result.text == text
+
+
 def test_high_risk_spans_are_protected():
     text = (
         'Alice said "important useful method". The useful method is not simple. '
