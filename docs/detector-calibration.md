@@ -53,6 +53,7 @@ Artifacts include:
   scores, lengths, native/visible diagnostics, generation latency and callback time;
 - one `*.calibration.json` per detector/depth/target FPR, frozen before evaluation;
 - `metrics.json`, `summary.md` and lightweight held-out distribution SVGs;
+- `evaluation.jsonl` with each held-out frozen decision and calibration identity;
 - evaluator-only `private/secrets.json` and `private/tokens.jsonl` for exact replay.
 
 Resolved configurations and public artifacts contain no private watermark keys
@@ -138,10 +139,12 @@ scheme/statistic, public watermark config (including depth), model/blob/runtime
 and template identity, generation/sampling settings, key reference, dataset hash,
 length support, timestamp/version and threshold. It rejects incompatible reuse.
 The integrity digest detects accidental edits; it is not an authenticity signature.
-`require_frozen_evaluator()` is the guard future attack-success code must call.
-Future attack metrics must additionally restrict evasion claims to originally
-detected samples and report that eligibility rate; a pre-existing detector miss
-is not successful evasion. No attack is implemented here.
+`require_frozen_evaluator()` guards future attack-success code.
+`require_detected_baseline()` additionally restricts evasion eligibility to
+originally detected samples. Future attack metrics must report that eligibility
+rate; a pre-existing detector miss is not successful evasion. No attack is
+implemented here. An attacked sample returning INSUFFICIENT EVIDENCE must be
+reported as abstention, not silently counted as successful evasion.
 
 ## Native versus visible diagnostics
 

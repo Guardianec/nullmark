@@ -1,5 +1,6 @@
 """Optional FastAPI boundary: fixed assets, same-origin JSON, sanitized errors."""
 
+import json
 import logging
 from dataclasses import asdict
 from pathlib import Path
@@ -92,6 +93,10 @@ def create_app(*, keys=None, calibrations=()) -> FastAPI:
                     "statistic": c.statistic,
                     "target_fpr": c.operating_point.target_fpr,
                     "supported": c.operating_point.supported,
+                    "depth": json.loads(c.conditions_json).get("watermark", {}).get("depth"),
+                    "threshold": c.operating_point.empirical_threshold,
+                    "clean_count": c.operating_point.number_of_clean_samples,
+                    "usable_length_regime": [c.minimum_usable_tokens, c.maximum_usable_tokens],
                 }
                 for c in playground.calibrations.values()
             ]

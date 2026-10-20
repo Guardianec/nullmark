@@ -58,6 +58,8 @@ def test_cli_commands_and_errors(tmp_path):
     detected = cli("detect", *args, "--text-file", text)
     assert detected.returncode == 0, detected.stderr
     assert json.loads(detected.stdout)["prediction"] is True
+    assert json.loads(detected.stdout)["state"] == "INSUFFICIENT EVIDENCE"
+    assert json.loads(detected.stdout)["decision_scope"] == "legacy_demo"
     assert (
         cli("generate", "--config", config, "--scheme", "none", "--prompt", "Hello").returncode == 0
     )

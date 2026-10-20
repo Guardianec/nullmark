@@ -223,6 +223,17 @@ def require_frozen_evaluator(detector: CalibratedDetector | None, *, context: di
     return detector
 
 
+def require_detected_baseline(
+    detector: CalibratedDetector | None, result: DetectionResult, *, context: dict
+) -> dict:
+    """Future evasion claims require an originally detected, eligible sample."""
+    frozen = require_frozen_evaluator(detector, context=context)
+    decision = frozen.evaluate(result, context=context)
+    if decision["state"] != "DETECTED":
+        raise ValueError("evasion claims require an originally detected baseline")
+    return decision
+
+
 def token_diagnostic(scheme: WatermarkScheme, generated, model) -> dict:
     visible_ids = model.encode(generated.text)
     native = scheme.score_ids(generated.token_ids)

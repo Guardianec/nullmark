@@ -210,6 +210,10 @@ def test_gui_loaded_calibration_and_insufficient_evidence(keys, supported_length
             minimum_usable_tokens=1,
         )
     service.calibrations[artifact.calibration_id] = artifact
+    client = TestClient(create_app(keys=keys, calibrations=[artifact]), base_url="http://127.0.0.1")
+    listed = client.get("/api/calibrations").json()["calibrations"][0]
+    assert listed["depth"] == 10 and listed["clean_count"] == 100
+    assert listed["threshold"] == 0.1 and keys.master.hex() not in json.dumps(listed)
     calibrated = settings.model_copy(update={"calibration_id": artifact.calibration_id})
     detected = service.generate(calibrated)["marked"]["detection"]
     assert detected["state"] == ("DETECTED" if supported_length else "INSUFFICIENT EVIDENCE")

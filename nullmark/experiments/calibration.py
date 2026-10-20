@@ -222,6 +222,7 @@ def summarize_run(output: Path) -> dict:
     rows = [json.loads(line) for line in (output / "scores.jsonl").read_text("utf-8").splitlines()]
     manifest = json.loads((output / "manifest.json").read_text("utf-8"))
     reports = {}
+    evaluation_records = []
     for name, context in manifest["conditions"].items():
         selected = [r for r in rows if r["detector_id"] == name]
         calibration = [r for r in selected if r["split"] == "calibration"]
@@ -230,6 +231,8 @@ def summarize_run(output: Path) -> dict:
             path = output / f"{name}-fpr-{alpha:g}.calibration.json"
             if path.exists():
                 artifact = CalibratedDetector.load(path)
+                if artifact.calibration_dataset_hash != manifest["calibration_dataset_hash"]:
+                    raise ValueError("calibration artifact belongs to a different dataset split")
             else:
                 artifact = CalibratedDetector.fit(
                     scheme="kgw" if name == "kgw-z_score" else "synthid",
@@ -246,6 +249,26 @@ def summarize_run(output: Path) -> dict:
                 )
                 artifact.save(path)
             metrics = evaluate_rows(evaluation, artifact, context)
+            evaluation_records.extend(
+                {
+                    "sample_id": r["sample_id"],
+                    "detector_id": name,
+                    "target_fpr": alpha,
+                    "watermarked": r["watermarked"],
+                    "visible_token_count": r["retokenized_token_count"],
+                    "detection": artifact.evaluate(
+                        DetectionResult(**r["detection"]), context=context
+                    ),
+                }
+                for r in evaluation
+            )
+            metrics["calibration_total_clean_samples"] = sum(
+                not r["watermarked"] for r in calibration
+            )
+            metrics["calibration_excluded_clean_samples"] = (
+                metrics["calibration_total_clean_samples"]
+                - artifact.operating_point.number_of_clean_samples
+            )
             metrics["by_usable_length"] = {
                 label: evaluate_rows(
                     [r for r in evaluation if lo <= r["usable_detector_token_count"] < hi],
@@ -349,6 +372,9 @@ def summarize_run(output: Path) -> dict:
         "Pooled FPR is not a conditional length guarantee; Wilson 95% intervals.",
     }
     write_json(output / "metrics.json", result)
+    (output / "evaluation.jsonl").write_text(
+        "".join(canonical(row) + "\n" for row in evaluation_records), "utf-8"
+    )
     summary = [
         "# Experiment 002 detector calibration",
         "",

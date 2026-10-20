@@ -370,7 +370,7 @@ function chart() {
 updateControls();
 fetch("/api/calibrations").then(r => r.json()).then(data => {
   for (const c of data.calibrations) {
-    const option = node("option", `${c.scheme} ${c.statistic} · FPR ${100*c.target_fpr}% · ${c.id.slice(0,8)}${c.supported ? "" : " · exploratory"}`);
+    const option = node("option", `${c.scheme} ${c.statistic}${c.depth ? " · depth " + c.depth : ""} · FPR ${100*c.target_fpr}% · n ${c.clean_count} · ${c.id.slice(0,8)}${c.supported ? "" : " · exploratory"}`);
     option.value = c.id;
     $("calibration").append(option);
   }

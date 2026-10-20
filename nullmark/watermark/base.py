@@ -18,7 +18,7 @@ class DetectionResult:
 
     @property
     def state(self) -> str:
-        if self.prediction is None:
+        if self.prediction is None or self.decision_scope != "calibrated":
             return "INSUFFICIENT EVIDENCE"
         return "DETECTED" if self.prediction else "NOT DETECTED"
 

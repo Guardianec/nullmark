@@ -12,6 +12,8 @@ Final detector calibration pass:
 - Playground names the statistic and requires compatible calibration for binary
   decisions; unsupported conditions/lengths report insufficient evidence.
 - Existing Experiment 001 and v0.1.1 scope retained; no attack implementation.
+- Future evasion eligibility guard rejects originally undetected/abstained samples;
+  per-sample held-out decisions retain their frozen calibration identity.
 
 Visual Playground (maintenance/usability insertion):
 

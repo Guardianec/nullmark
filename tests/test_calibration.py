@@ -13,6 +13,7 @@ from nullmark.evaluation.calibration import (
     CalibratedDetector,
     conditions,
     empirical_threshold,
+    require_detected_baseline,
     require_frozen_evaluator,
     token_diagnostic,
     uncalibrated,
@@ -138,6 +139,26 @@ def test_uncalibrated_and_future_guard():
     with pytest.raises(ValueError):
         require_frozen_evaluator(small, context={})
     assert small.evaluate(result(0.9), context={})["status"] == "calibration_sample_count"
+
+
+@pytest.mark.parametrize(
+    "score,count,eligible",
+    [(0.8, 128, True), (0.1, 128, False), (0.8, 1, False), (None, 128, False)],
+)
+def test_future_evasion_requires_a_detected_baseline(score, count, eligible):
+    detector = fitted()
+    if eligible:
+        assert (
+            require_detected_baseline(detector, result(score, count), context={"model": "test"})[
+                "state"
+            ]
+            == "DETECTED"
+        )
+    else:
+        with pytest.raises(ValueError, match="originally detected"):
+            require_detected_baseline(detector, result(score, count), context={"model": "test"})
+    legacy = DetectionResult(0.9, True, 0.6, "raw_mean", 128)
+    assert legacy.state == "INSUFFICIENT EVIDENCE"
 
 
 def test_split_replay_disjoint_text_and_style_coverage():
@@ -282,6 +303,12 @@ def test_calibration_cli_workflow_and_no_eval_leakage(tmp_path, monkeypatch, mod
     assert all(r["tpr"]["value"] is None for r in reports.values())
     assert len((output / "samples.jsonl").read_text().splitlines()) == 48
     assert len(list(output.glob("*.calibration.json"))) == 3
+    decisions = [
+        json.loads(line) for line in (output / "evaluation.jsonl").read_text().splitlines()
+    ]
+    assert len(decisions) == 48
+    assert all(r["detection"]["prediction"] is None for r in decisions)
+    assert all(r["detection"]["calibration_id"] for r in decisions)
     assert (
         Path("configs/experiments/001_watermark_reproducibility.yaml").read_text().find("depth: 10")
         >= 0

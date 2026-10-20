@@ -1,5 +1,33 @@
 # v0.1.1 release verification
 
+## Final detector calibration protocol
+
+- Implementation commit `6adae6eb4bdcef5ae3565dddf4c47593a5f21f95` passed
+  [GitHub CI](https://github.com/Guardianec/nullmark/actions/runs/39424691204)
+  and the paired pull-request workflow run.
+- Local full suite: **145 passed, 1 skipped**. Ruff lint/format passed. The
+  default skip remains the opt-in pinned GPT-2 integration test.
+- Saved historical Experiment 001 samples replayed exact text and original IDs
+  for plain, SynthID and KGW from the existing offline GPT-2 cache. The historical
+  YAML is unchanged from `d1b4716`.
+- v0.1.1 wheel/source distribution built successfully, including calibration
+  modules, source configs/dataset and fixed Playground assets, with no private
+  directories or model weights. The installed core-only wheel completed the
+  12-sample offline smoke experiment with zero generation/detection failures.
+- New tests verify clean-only fitting before held-out generation, disjoint splits,
+  finite-sample ranks/ties, uncertainty warnings, immutable artifact reload and
+  compatibility checks, raw/weighted means, native/visible diagnostics, length
+  abstention, baseline detection eligibility, per-sample frozen decision exports,
+  and calibrated/uncalibrated Playground behavior. Legacy CLI predictions are
+  explicitly tagged demo-only and do not expose a calibrated DETECTED state.
+- Browser verification exercised the named weighted-mean mode, token inspection,
+  selected-statistic trace, visible/usable counts and score-only presentation.
+  [Screenshot](images/playground-calibration.png).
+
+The [calibration protocol](detector-calibration.md) documents statistical support
+and limitations separately from software checks. Historical five-prompt evidence
+below remains a smoke observation, not an empirical operating-point validation.
+
 ## Ollama / direct GGUF amendment
 
 The focused local-model amendment was verified on 2026-10-20:

@@ -1,5 +1,12 @@
 # Local GGUF verification for v0.1.1
 
+The five-prompt observations below are retained as historical diagnostics of
+embedding signal and the old demo thresholds. Experiment 002 adds independent
+clean calibration and held-out evaluation, with upstream weighted mean, depth
+10/20/30, length abstention, and native/visible scoring diagnostics. See
+[the detector protocol](detector-calibration.md) for the decision rule and finite
+sample limitations. An elevated marked score alone is not a calibrated decision.
+
 Verified on Windows x86-64, Python 3.12.8, Ollama **0.40.6** and
 llama-cpp-python **0.3.36**, on 2026-10-20. The machine has an NVIDIA RTX 4070
 SUPER (12 GB VRAM) and approximately 32 GB RAM. PyTorch 2.6.0+cpu and the

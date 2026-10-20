@@ -157,8 +157,17 @@ def execute(args) -> int:
         )
         sys.stdout.write(generated.text)
     else:
+        detected = scheme.detect(args.text_file.read_text("utf-8"))
         print(
-            json.dumps(scheme.detect(args.text_file.read_text("utf-8")).to_dict(), allow_nan=False)
+            json.dumps(
+                {
+                    **detected.to_dict(),
+                    "state": detected.state,
+                    "classification_note": "prediction is legacy/demo only; use a frozen "
+                    "calibrated evaluator for research decisions",
+                },
+                allow_nan=False,
+            )
         )
     model.close()
     return 0
