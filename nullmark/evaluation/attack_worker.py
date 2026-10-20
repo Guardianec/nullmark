@@ -88,6 +88,8 @@ class AttackWorker:
             result = AttackOutput(**stored["output"])
             validate_output(sample.text, result.text, sample.prompt)
             return result
+        if self.process is not None and self.process.poll() is not None:
+            self.close()
         if self.process is None:
             self._start()
         from concurrent.futures import ThreadPoolExecutor, TimeoutError

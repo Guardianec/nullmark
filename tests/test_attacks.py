@@ -146,6 +146,28 @@ def test_worker_module_loads_without_evaluator_or_watermark_imports():
     subprocess.run([sys.executable, "-c", code], check=True)
 
 
+def test_attack_operates_with_private_access_and_evaluator_imports_forbidden(tmp_path):
+    code = """
+import builtins, sys
+original_import = builtins.__import__
+original_open = builtins.open
+def guarded_import(name, *args, **kwargs):
+    assert not name.startswith(('nullmark.evaluation', 'nullmark.watermark', 'nullmark.models'))
+    return original_import(name, *args, **kwargs)
+def guarded_open(path, *args, **kwargs):
+    assert 'private' not in str(path).lower()
+    return original_open(path, *args, **kwargs)
+builtins.__import__ = guarded_import
+builtins.open = guarded_open
+from nullmark.attacks.base import AttackInput
+from nullmark.attacks.baselines import BaselineAttack
+out = BaselineAttack('random_edit', .2).transform(
+    AttackInput('x', 'p', 'The useful method often helps people learn quickly.'), seed=9)
+assert out.text
+"""
+    subprocess.run([sys.executable, "-c", code], check=True)
+
+
 def test_worker_rejects_private_or_unknown_fields():
     request = {
         "sample": {"sample_id": "x", "prompt": "p", "text": TEXT, "key": "no"},
@@ -189,6 +211,12 @@ def test_quality_metrics_anchors_and_exact_edit_counts():
     assert quality["anchors_retained"] == 2 and quality["anchors_total"] == 3
     assert quality["anchors_added"] == 1
     assert quality["semantic_similarity"] is None
+
+
+def test_anchor_checks_preserve_number_signs_and_single_quoted_spans():
+    quality = quality_metrics("The change was -5%.", "The change was +5%.", tokenize=words)
+    assert quality["anchors_retained"] == 0 and quality["anchors_added"] == 1
+    assert not candidates("'useful method' ‘important changes’")
 
 
 def test_diff_reconstructs_original_and_after_with_insert_delete_replace():

@@ -6,10 +6,11 @@ from collections import Counter
 WORD = re.compile(r"\b\w+(?:['’]\w+)?\b")
 ANCHOR = re.compile(
     r"https?://[^\s<>]+|[\w.+-]+@[\w.-]+\.[A-Za-z]+|"
-    r"\b\d+(?:[.,:/-]\d+)*(?:\s?%)?\b"
+    r"(?<!\w)[+-]?\d+(?:[.,:/-]\d+)*(?:\s?%)?(?!\w)"
 )
 PROTECTED = re.compile(
     r'```[\s\S]*?```|`[^`]*`|"[^"\n]*"|“[^”]*”|'
+    r"(?<!\w)'[^'\n]+'(?!\w)|‘[^’]*’|"
     r"https?://\S+|[\w.+-]+@[\w.-]+|\$[^$]+\$|\b[A-Z][\w-]*\b|"
     r"\b(?:not|no|never|neither|nor|without|cannot|\w+n't)\b",
 )
