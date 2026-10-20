@@ -65,6 +65,26 @@ def append(path, row):
         handle.write(json.dumps(row, allow_nan=False) + "\n")
 
 
+def save_replay_inputs(config, prompts, *, base, output):
+    """Make stored relative paths usable from the run directory without refitting."""
+    (output / "evaluators").mkdir(exist_ok=True)
+    for scheme, path in config.calibrations.items():
+        (output / "evaluators" / f"{scheme}.calibration.json").write_bytes(
+            (base / path).read_bytes()
+        )
+    (output / "calibration-prompts.jsonl").write_bytes(
+        (base / config.calibration_prompts).read_bytes()
+    )
+    (output / "prompts.jsonl").write_text(
+        "".join(json.dumps(asdict(p)) + "\n" for p in prompts), "utf-8"
+    )
+    resolved = config.model_dump()
+    resolved["dataset"] = {"source": "jsonl", "path": "prompts.jsonl", "sample_count": len(prompts)}
+    resolved["calibration_prompts"] = "calibration-prompts.jsonl"
+    resolved["calibrations"] = {s: f"evaluators/{s}.calibration.json" for s in config.calibrations}
+    (output / "config.resolved.yaml").write_text(yaml.safe_dump(resolved), "utf-8")
+
+
 def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=False):
     config = AttackBenchmarkConfig.model_validate(yaml.safe_load(config_path.read_text("utf-8")))
     base = config_path.parent
@@ -96,12 +116,13 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
             output / "manifest.json",
             {**identity, "environment": environment(), "stage": "initialized"},
         )
-        (output / "config.resolved.yaml").write_text(yaml.safe_dump(config.model_dump()), "utf-8")
         for name in ("source_samples", "baselines", "attack_inputs", "evaluation", "quality"):
             (output / f"{name}.jsonl").touch()
         (output / "attacks").mkdir()
         for attack in NAMES:
             (output / "attacks" / f"{attack}.jsonl").touch()
+
+    save_replay_inputs(config, prompts, base=base, output=output)
 
     manifest = json.loads((output / "manifest.json").read_text("utf-8"))
     manifest.setdefault("stage_events", []).append(

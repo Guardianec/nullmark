@@ -326,3 +326,37 @@ def test_new_corpus_is_unique_and_disjoint():
     assert len(prompts) == 240 and len({p.style for p in prompts}) == 8
     with pytest.raises(ValueError):
         validate_disjoint(prompts, [asdict(prompts[0])])
+
+
+def test_resolved_benchmark_paths_replay_from_run_directory(tmp_path):
+    import yaml
+
+    from nullmark.datasets import Prompt, load_prompts
+    from nullmark.experiments.attacks import AttackBenchmarkConfig, save_replay_inputs
+
+    base = tmp_path / "input"
+    output = tmp_path / "run"
+    base.mkdir()
+    output.mkdir()
+    (base / "calibration.jsonl").write_text('{"id":"old","text":"different"}\n')
+    for scheme in ("kgw", "synthid"):
+        (base / f"{scheme}.json").write_bytes(b'{"frozen":true}\n')
+    config = AttackBenchmarkConfig.model_validate(
+        {
+            "model": {},
+            "dataset": {"source": "jsonl", "path": "input.jsonl", "sample_count": 1},
+            "calibration_prompts": "calibration.jsonl",
+            "calibrations": {s: f"{s}.json" for s in ("kgw", "synthid")},
+        }
+    )
+    prompts = [Prompt("new", "science", "Explain a new topic.")]
+    save_replay_inputs(config, prompts, base=base, output=output)
+    resolved = AttackBenchmarkConfig.model_validate(
+        yaml.safe_load((output / "config.resolved.yaml").read_text("utf-8"))
+    )
+    assert load_prompts(resolved.dataset, output)[0] == prompts
+    assert (output / resolved.calibration_prompts).read_bytes() == (
+        base / "calibration.jsonl"
+    ).read_bytes()
+    for scheme, path in resolved.calibrations.items():
+        assert (output / path).read_bytes() == (base / f"{scheme}.json").read_bytes()
