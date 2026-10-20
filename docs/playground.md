@@ -29,6 +29,16 @@ CPU is tested; selecting unavailable CUDA returns a controlled error.
   `607a30d783dfa663caf39e06633721c8d4cfcd7e`, as in Experiment 001.
   Natural-language continuations; first use may download weights/tokenizer.
   Slower on CPU. Prompt plus output must fit its 1024-token context.
+- **Ollama / local GGUF:** supported modern instruction models already installed
+  locally. Ollama discovers the model; llama-cpp-python performs direct inference
+  on the same weights with dynamic watermark processing before sampling. The
+  Windows validation used Qwen 3.5 9B Q4_K_M. This is not universal Ollama support.
+
+Interactive sampling defaults are temperature **0.8**, top-k **40**, top-p **0.95**.
+Controls and results show the resolved values. They are not silently inherited
+from Ollama's Modelfile. Core ModelConfig defaults remain **1.0 / 0 / 1.0**;
+Experiment 001 explicitly pins these historical settings. Sampling is present in
+resolved configurations, manifests, evaluator provenance and playground metadata.
 
 Choose None, KGW or SynthID, set public parameters/seed, enter a prompt and generate.
 Output is limited to 16–512 tokens; prompts to 16,000 characters, with model
@@ -121,3 +131,118 @@ only optional normal Hugging Face model downloads may use the network. Keep
 private replay files away from future untrusted workers.
 
 No attacks ship here. Next: **v0.2 — Baseline Attacks**.
+
+
+## Ollama-installed GGUF
+
+Keep Ollama running on `127.0.0.1:11434`, then select **Ollama / local GGUF** and
+refresh. Choose an installed model explicitly; no large model is loaded merely
+by opening the selector. The UI shows its name, quantization and installed size.
+The Modelfile's local FROM paths and the local manifest identify the language
+GGUF separately from vision projectors. Cloud-only models, adapter layers,
+ambiguous/multiple language blobs and unreadable/non-GGUF weights are rejected.
+The absolute blob path is kept internal, not served or put in public provenance.
+Its full SHA-256 is verified at load; results record that hash and Ollama model ID.
+
+Ollama is used to discover installed weights. The normal `/api/chat` API does not
+give this application the general per-token watermark hook it needs. NullMark
+therefore performs direct inference against the same local GGUF with
+llama-cpp-python **0.3.36**, bridging exact IDs and logits into the existing HF
+KGW/SynthID processors before native sampling. No finished text is rewritten or
+labelled as watermarked after the fact. The bridge verifies callback invocation,
+prefix IDs and vocabulary shape and fails closed on callback errors. The pinned
+native version matters: rerun the capability check when changing builds/models.
+
+### Optional installation
+
+`.[gui]` still serves builtin-tiny/GPT-2 without llama-cpp-python or Ollama.
+GGUF inference is optional:
+
+```sh
+pip install -e ".[gui,gguf]"
+```
+
+A normal PyPI installation may compile llama.cpp and need CMake plus a compatible
+C/C++ toolchain (Visual Studio Build Tools on Windows). Prefer a compatible
+[official prebuilt wheel](https://github.com/abetlen/llama-cpp-python#installation).
+For CPU, use the official CPU wheel index where your platform/version is offered:
+
+```sh
+pip install --only-binary llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu llama-cpp-python==0.3.36
+pip install -e ".[gui,gguf]"
+```
+
+On this verified Windows machine, an RTX 4070 SUPER with a compatible driver used
+the official CUDA 13.0 wheel:
+
+```sh
+pip install --only-binary llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu130 llama-cpp-python==0.3.36
+pip install -e ".[gui,gguf]"
+```
+
+This is a platform-specific option, not a universal CUDA installation command.
+A CUDA wheel needs matching native runtimes and driver support even when imported.
+On Windows NullMark can reuse the matching installed Ollama cuBLAS DLL directory,
+discovered relative to the Ollama executable; no DLLs or model weights are copied.
+Otherwise install/configure the wheel's documented runtime or use a CPU build.
+A missing/incompatible native runtime produces a controlled diagnostic.
+
+### Check a model
+
+```sh
+nullmark model check-ollama "qwen3.5:9b-q4_K_M" --offload auto --tokens 128
+```
+
+This local opt-in check verifies blob resolution/hash, load, tokenizer, generation,
+same-seed replay, callback on every generated token, an intentionally forced
+known token, restoration after removing the callback, and correct-key KGW/SynthID
+signal gain over paired controls across three seeds. It also checks a wrong KGW
+key. It reports real predictions separately: passing capability/signal checks does
+not imply every marked sample crosses a detector threshold. No giant model,
+Ollama server or native library is required by ordinary CI tests.
+
+### Chat, state and sampling
+
+The embedded GGUF chat template renders a user message and assistant generation
+prefix through the native library's sandboxed Jinja formatter. No Qwen template
+is hard-coded. `enable_thinking=False` is supplied; the tested Qwen template
+supports it. Other templates may not support this switch, and their thinking
+content is left intact rather than deleted. The rendered template digest and
+thinking request are recorded. This is text-only inference, not full Ollama
+renderer/tool/vision/adapter parity; Modelfile SYSTEM and sampling overrides are
+not automatically applied.
+
+The native watermark processor is freshly constructed for every generation and
+runs on CPU token IDs/logits; GPU offload applies to model inference. It uses the
+real sampled IDs, including EOG, and the actual formatted prompt IDs. The visible
+text excludes control tokens; detector-side retokenization stays separate and
+round-trip differences are shown. A change in sampling can affect watermark
+strength. Native watermarking precedes top-k/top-p/temperature filtering, whereas
+Transformers retains its pinned processor order; equal seeds/settings do not
+promise identical output across backends or hardware.
+
+Native min-p is disabled and repetition penalty is neutral (1.0); these settings
+are recorded. GGUF seed 4294967295 is rejected because llama.cpp reserves it for
+random seeding. Choose 0 through 4294967294 for deterministic sampling.
+
+The cache holds one active backend. Switching model/device/offload/context or a
+refreshed model digest closes the previous backend before loading another.
+Generation callbacks/sampler state are released between runs. Large models take
+longer to load, and memory errors remain possible. Auto is conservative: on a
+supported NVIDIA build it requests full offload only when reported free memory
+exceeds the blob size plus a reserve; otherwise it uses CPU. Explicit GPU requires
+an offload-capable build and enough memory. CPU and other accelerator performance
+is model/build dependent; this is not a hardware-tuning UI.
+
+GGUF contexts default to 2048 tokens and can be changed under **Inference options**
+(up to 8192 in the GUI). Prompt plus continuation is checked before generation.
+Model metadata records backend/version, blob digest, quantization, template,
+context/offload, threads, sampling and seed provenance, never a local absolute path.
+The experiment interface also accepts `backend: ollama-gguf`, an installed model
+`name`, and the full **blob** SHA-256 as `revision`; public settings contain no
+private path. Actual formatted prompt IDs are stored in private token records.
+
+Expand **Exact decoded text** for uninterrupted prose alongside token fragments.
+The CLI remains the authoritative experiment/replay interface. See the
+[verification record](release-verification.md) for actual Qwen/GPT-2 results and
+limitations, including marked outputs below the original uncalibrated thresholds.

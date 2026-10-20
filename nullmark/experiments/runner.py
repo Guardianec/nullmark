@@ -21,7 +21,7 @@ from nullmark.datasets import load_prompts
 from nullmark.evaluation.metrics import summarize, summary_markdown
 from nullmark.evaluation.records import export_sample
 from nullmark.evaluation.secrets import KeyStore, key_reference
-from nullmark.models import CausalModel
+from nullmark.models import load_model
 from nullmark.watermark.registry import SCHEMES, load_scheme
 
 
@@ -98,7 +98,7 @@ def run(
         "".join(json.dumps(asdict(p)) + "\n" for p in prompts),
         encoding="utf-8",
     )
-    model = CausalModel(config.model)
+    model = load_model(config.model)
     manifest = {
         "version": 1,
         "experiment_id": config.name,
@@ -107,6 +107,12 @@ def run(
         "dataset_source": config.dataset.source,
         "dataset_sha256": dataset_hash,
         "model": model.metadata(),
+        "sampling": {
+            "seed": config.seed,
+            "temperature": config.model.temperature,
+            "top_k": config.model.top_k,
+            "top_p": config.model.top_p,
+        },
         "environment": environment(),
         "expected_generations": len(prompts) * config.random_keys * 3,
         "expected_detections": len(prompts) * config.random_keys * 4,
@@ -165,6 +171,11 @@ def run(
                         "prompt_id": prompt.id,
                         "prompt_style": prompt.style,
                         "seed": seed,
+                        "sampling": {
+                            "temperature": config.model.temperature,
+                            "top_k": config.model.top_k,
+                            "top_p": config.model.top_p,
+                        },
                         "watermark_scheme": name,
                         "key_index": index,
                         "key_ref": refs.get(name),
@@ -179,7 +190,14 @@ def run(
                     records.append(record)
                     append(samples_file, export_sample(sample))
                     append(generation_file, record)
-                    append(tokens_file, {"sample_id": sample_id, "token_ids": generated.token_ids})
+                    append(
+                        tokens_file,
+                        {
+                            "sample_id": sample_id,
+                            "token_ids": generated.token_ids,
+                            "prompt_token_ids": generated.prompt_token_ids,
+                        },
+                    )
                     for detector_name in SCHEMES if name == "none" else (name,):
                         try:
                             detected = schemes[detector_name].detect(generated.text)
@@ -200,4 +218,5 @@ def run(
     metrics["purpose"] = config.purpose
     write_json(output / "metrics.json", metrics)
     (output / "summary.md").write_text(summary_markdown(metrics, config.purpose), encoding="utf-8")
+    model.close()
     return output

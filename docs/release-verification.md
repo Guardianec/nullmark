@@ -1,5 +1,34 @@
 # v0.1.1 release verification
 
+## Ollama / direct GGUF amendment
+
+The focused local-model amendment was verified on 2026-10-20:
+
+- Full suite: **106 passed, 1 skipped**. The pretrained integration test passed
+  separately using the existing pinned GPT-2 cache in offline mode.
+- Ruff lint/format and whitespace checks passed.
+- Existing Ollama `qwen3.5:9b-q4_K_M` weights passed native callback capability,
+  paired KGW/SynthID, wrong-key KGW, CPU/GPU inference and exact experiment replay
+  checks. No duplicate model checkpoint was downloaded.
+- Historical Experiment 001 text and original token IDs replayed exactly in all
+  three schemes with explicit historical sampling settings.
+- Wheel and source distribution built successfully. The installed core-only
+  wheel ran the 12-sample offline smoke experiment without failures; its environment
+  contains neither FastAPI nor llama-cpp-python. The installed GUI wheel passed
+  fixed-asset, three-scheme builtin-tiny, sampling metadata and discovery checks
+  without llama-cpp-python, and selecting Qwen returned a clean optional-extra hint.
+- Qwen plain, paired KGW and paired SynthID were checked in the browser. Exact
+  contexts, token selection and traces worked, with no console errors/warnings.
+  Layouts at 1440/768/390px were inspected without horizontal page overflow.
+  Screenshot: `docs/images/playground-qwen.jpg`.
+- Repository and distribution scans found no model weights, caches, credentials
+  or raw private key values from the local verification runs.
+- [Local model verification](local-model-verification.md) records the exact model,
+  runtime/template digests, five paired score comparisons, representative prose
+  and limitations. Score increases are distinguished from threshold crossings.
+
+## Original Visual Playground verification
+
 Verified 2026-10-20 on Windows x86-64, Python 3.12.8, PyTorch 2.6.0+cpu,
 Transformers 4.57.6, FastAPI 0.115.14, Starlette 0.46.2 and Uvicorn 0.34.3.
 
@@ -45,7 +74,7 @@ server and GUI tests ran with local networking allowed. Headroom stored the
 source excerpt but its configured compression proxy was unreachable; focused
 source reads were used. No guarantee of automatic traffic compression is made.
 
-Known limits: CPU only was verified; SynthID is uncalibrated; no recorded
+Original playground limits: Transformers CPU only was verified; SynthID is uncalibrated; no recorded
 generation logits/probabilities, persistent GUI keys, run-folder browser or attack
 algorithms. Pinned HF's repeated KGW tensor n-grams count separately despite its
 unique-n-gram option; the existing detector is preserved and the trace matches it.

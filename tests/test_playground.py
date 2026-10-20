@@ -115,3 +115,52 @@ def test_cache_and_fresh_key():
     fresh = service.generate(settings)
     assert first["key_ref"] != fresh["key_ref"]
     assert service._keys.master.hex() not in json.dumps(fresh)
+
+
+def test_switching_models_releases_previous_backend(monkeypatch):
+    service = Playground()
+    settings = PlaygroundSettings(prompt="word1", max_new_tokens=16)
+    service.generate(settings)
+    previous = next(iter(service._models.values()))
+    closed = []
+    original = previous.close
+
+    def close():
+        closed.append(True)
+        original()
+
+    monkeypatch.setattr(previous, "close", close)
+    # A different context setting evicts the active backend without downloading another model.
+    service.generate(settings.model_copy(update={"context_length": 1024}))
+    assert closed == [True] and len(service._models) == 1
+
+
+def test_discovery_route_offline_and_without_paths(client, monkeypatch):
+    import nullmark.playground.app as app
+    from nullmark.models.ollama import InstalledModel, LocalModelError
+
+    monkeypatch.setattr(
+        app,
+        "list_models",
+        lambda: [
+            InstalledModel(
+                "qwen:test",
+                "a" * 64,
+                100,
+                "Q4",
+                "9B",
+                True,
+                "local",
+            )
+        ],
+    )
+    result = client.get("/api/models")
+    assert result.status_code == 200 and result.json()["models"][0]["name"] == "qwen:test"
+    assert "path" not in result.text
+
+    def offline():
+        raise LocalModelError("Start Ollama and refresh.")
+
+    monkeypatch.setattr(app, "list_models", offline)
+    result = client.get("/api/models")
+    assert result.json()["models"] == [] and "Start Ollama" in result.text

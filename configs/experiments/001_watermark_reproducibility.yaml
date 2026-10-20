@@ -8,6 +8,9 @@ model:
   device: cpu
   max_new_tokens: 192
   threads: 2
+  temperature: 1.0
+  top_k: 0
+  top_p: 1.0
 dataset:
   source: builtin-v1
   sample_count: 8

@@ -22,6 +22,8 @@ class Generation:
     text: str
     token_ids: list[int]
     seconds: float
+    prompt_token_ids: list[int] | None = None
+    processor_calls: int = 0
 
 
 class TextGenerator(Protocol):
@@ -75,6 +77,38 @@ class CausalModel:
     def encode(self, text: str) -> list[int]:
         return self.tokenizer.encode(text, add_special_tokens=False)
 
+    def encode_prompt(self, text: str) -> list[int]:
+        return self.encode(text)
+
+    def decode(self, ids: list[int]) -> str:
+        return self.tokenizer.decode(ids, clean_up_tokenization_spaces=False)
+
+    @property
+    def vocab_size(self) -> int:
+        return self.model.config.vocab_size
+
+    @property
+    def detector_config(self):
+        return self.model.config
+
+    @property
+    def watermark_device(self) -> str:
+        return self.settings.device
+
+    @property
+    def eos_token_ids(self) -> frozenset[int]:
+        eos = self.tokenizer.eos_token_id
+        return frozenset([eos]) if eos is not None else frozenset()
+
+    @property
+    def special_token_ids(self) -> frozenset[int]:
+        return frozenset(self.tokenizer.all_special_ids)
+
+    def close(self) -> None:
+        self.model = None
+        if self.settings.device == "cuda":
+            torch.cuda.empty_cache()
+
     def metadata(self) -> dict:
         return {
             "name": self.settings.name,
@@ -83,6 +117,8 @@ class CausalModel:
             "vocab_size": self.model.config.vocab_size,
             "device": self.settings.device,
             "trained": self.settings.name != "builtin-tiny",
+            "backend": "transformers",
+            "sampling": {k: getattr(self.settings, k) for k in ("temperature", "top_k", "top_p")},
         }
 
     @torch.inference_mode()
@@ -102,8 +138,8 @@ class CausalModel:
             output = self.model.generate(
                 **inputs,
                 do_sample=True,
-                top_k=0,
-                top_p=1.0,
+                top_k=self.settings.top_k,
+                top_p=self.settings.top_p,
                 temperature=self.settings.temperature,
                 max_new_tokens=self.settings.max_new_tokens,
                 pad_token_id=self.model.config.pad_token_id or self.tokenizer.eos_token_id or 0,
@@ -113,4 +149,4 @@ class CausalModel:
         text = self.tokenizer.decode(
             ids, skip_special_tokens=False, clean_up_tokenization_spaces=False
         )
-        return Generation(text, ids, perf_counter() - start)
+        return Generation(text, ids, perf_counter() - start, inputs["input_ids"][0].tolist())

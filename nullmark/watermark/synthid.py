@@ -4,12 +4,12 @@ import torch
 from transformers import SynthIDTextWatermarkingConfig
 
 from nullmark.config import SynthIDConfig
-from nullmark.models import CausalModel
+from nullmark.models import TextGenerationBackend
 from nullmark.watermark.base import DetectionResult, WatermarkScheme
 
 
 class SynthIDScheme(WatermarkScheme):
-    def __init__(self, model: CausalModel, config: SynthIDConfig, secret: dict):
+    def __init__(self, model: TextGenerationBackend, config: SynthIDConfig, secret: dict):
         if len(secret.get("keys", [])) != config.depth:
             raise ValueError("SynthID secret depth does not match configuration")
         self.model = model
@@ -46,14 +46,13 @@ class SynthIDScheme(WatermarkScheme):
 
     def scoring_data(self, ids: list[int]) -> tuple[torch.Tensor, torch.Tensor]:
         processor = self.generation_config().construct_processor(
-            self.model.model.config.vocab_size,
-            self.model.settings.device,
+            self.model.vocab_size,
+            self.model.watermark_device,
         )
-        tensor = torch.tensor([ids], dtype=torch.long, device=self.model.settings.device)
+        tensor = torch.tensor([ids], dtype=torch.long, device=self.model.watermark_device)
         values = processor.compute_g_values(tensor)
         mask = processor.compute_context_repetition_mask(tensor)
-        eos = self.model.tokenizer.eos_token_id
-        if eos is not None:
+        for eos in self.model.eos_token_ids:
             mask &= processor.compute_eos_token_mask(tensor, eos)[
                 :, self.config.ngram_len - 1 :
             ].bool()

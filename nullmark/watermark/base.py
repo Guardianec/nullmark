@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from nullmark.models import CausalModel, Generation
+from nullmark.models import Generation, TextGenerationBackend
 
 
 @dataclass(frozen=True)
@@ -29,5 +29,5 @@ class WatermarkScheme(ABC):
     @abstractmethod
     def metadata(self) -> dict: ...
 
-    def generate(self, model: CausalModel, prompt: str, *, seed: int) -> Generation:
+    def generate(self, model: TextGenerationBackend, prompt: str, *, seed: int) -> Generation:
         return model.generate(prompt, seed=seed, watermark=self.generation_config())

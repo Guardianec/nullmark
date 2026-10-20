@@ -4,6 +4,14 @@
 
 Visual Playground (maintenance/usability insertion):
 
+- Optional direct GGUF backend reuses supported Ollama-installed weights; no duplicate model download.
+- Loopback-only discovery, language/projector separation, blob SHA-256 verification and private paths.
+- Embedded chat templates, non-thinking request where supported, exact generation IDs and EOG handling.
+- Reused HF processors in the native pre-sampling hook; callback failures reject the sample.
+- `nullmark model check-ollama` tests replay, forced logits and multi-seed watermark signals.
+- Temperature/top-k/top-p controls and provenance; historical Experiment 001 settings stay pinned.
+- Windows Qwen 3.5 9B smoke verification, mocked native tests and conservative model-cache cleanup.
+
 - Optional localhost FastAPI interface; bundled assets, no Node.js or cloud API.
 - Cached builtin-tiny and pinned GPT-2; None, KGW and SynthID generation.
 - Same-seed plain/marked comparison, divergence marker, token inspector and stepper.

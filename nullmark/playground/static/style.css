@@ -866,3 +866,33 @@ footer {
   overflow: auto;
   color: var(--ink)
 }
+
+.local-model-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px;
+  gap: 8px
+}
+
+.local-model-picker button {
+  padding: 0
+}
+
+.status {
+  overflow-wrap: anywhere
+}
+
+@media(max-width:760px) {
+  #ollama-settings {
+    grid-column: 1/-1
+  }
+}
+
+.inference-options {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 8px 0
+}
+
+.inference-options summary {
+  cursor: pointer
+}

@@ -3,6 +3,7 @@ const $ = id => document.getElementById(id);
 let result = null,
   selectedSide = "marked",
   selectedIndex = 0;
+let installedModels = [];
 const num = id => Number($(id).value);
 const fmt = value => value == null ? "—" : Number(value).toFixed(3);
 
@@ -21,6 +22,10 @@ function status(message, type = "") {
 function settings() {
   return {
     model: $("model").value,
+    ollama_model: $("model").value === "ollama" ? $("ollama-model").value : null,
+    ollama_digest: $("model").value === "ollama" ? installedModels.find(m => m.name === $("ollama-model").value)?.digest ?? null : null,
+    offload: $("offload").value,
+    context_length: num("context-length"),
     scheme: $("scheme").value,
     device: $("device").value,
     prompt: $("prompt").value,
@@ -28,6 +33,8 @@ function settings() {
     key_index: num("key-index"),
     max_new_tokens: num("length"),
     temperature: num("temperature"),
+    top_k: num("top-k"),
+    top_p: num("top-p"),
     paired: $("paired").checked,
     kgw: {
       greenlist_ratio: num("ratio"),
@@ -50,10 +57,56 @@ function updateControls() {
   $("synthid-settings").hidden = scheme !== "synthid";
   $("key-settings").hidden = scheme === "none";
   $("paired").disabled = scheme === "none";
-  $("model-note").textContent = $("model").value === "builtin-tiny" ? "Fast, offline random-weight model. Synthetic word sequences; software demonstration only." : "Natural-language continuations from pinned GPT-2. First use may download weights; slower on CPU.";
+  const local = $("model").value === "ollama";
+  $("ollama-settings").hidden = !local;
+  $("device").disabled = local;
+  $("device").hidden = local;
+  $("offload").hidden = !local;
+  $("offload").disabled = !local;
+  $("device-label").htmlFor = local ? "offload" : "device";
+  $("device-label").textContent = local ? "GGUF offload" : "Device";
+  $("model-note").textContent = local ? "High-quality local generation. Direct GGUF inference with per-token watermark control; Ollama discovers weights only." : $("model").value === "builtin-tiny" ? "Fast, offline random-weight model. Synthetic word sequences; software demonstration only." : "Reproducible small reference model. First use may download pinned GPT-2 weights; slower on CPU.";
 }
 $("scheme").addEventListener("change", updateControls);
-$("model").addEventListener("change", updateControls);
+$("model").addEventListener("change", () => {
+  updateControls();
+  if ($("model").value === "ollama" && !installedModels.length) refreshModels();
+});
+
+function localModelStatus() {
+  const model = installedModels.find(m => m.name === $("ollama-model").value);
+  if (model) $("ollama-status").textContent = `${model.parameter_size} · ${model.quantization} · ${(model.size/1e9).toFixed(1)} GB installed. Direct GGUF; loads on Generate.`;
+}
+async function refreshModels() {
+  $("refresh-models").disabled = true;
+  $("ollama-status").textContent = "Checking installed models on localhost…";
+  try {
+    const response = await fetch("/api/models");
+    const data = await response.json();
+    installedModels = data.models || [];
+    const previous = $("ollama-model").value;
+    $("ollama-model").replaceChildren();
+    const choose = node("option", "Choose an installed model");
+    choose.value = "";
+    $("ollama-model").append(choose);
+    installedModels.forEach(model => {
+      const option = node("option", `${model.name}${model.supported ? "":" · unsupported"}`);
+      option.value = model.name;
+      option.disabled = !model.supported;
+      $("ollama-model").append(option);
+    });
+    if (!installedModels.length) $("ollama-model").append(node("option", "No local models available"));
+    if (installedModels.some(m => m.name === previous && m.supported)) $("ollama-model").value = previous;
+    $("ollama-status").textContent = data.status || "Local model discovery unavailable.";
+    localModelStatus();
+  } catch (error) {
+    $("ollama-status").textContent = "Local discovery failed. Start Ollama and refresh.";
+  } finally {
+    $("refresh-models").disabled = false;
+  }
+}
+$("refresh-models").addEventListener("click", refreshModels);
+$("ollama-model").addEventListener("change", localModelStatus);
 async function post(path, payload) {
   const response = await fetch(path, {
     method: "POST",
@@ -80,16 +133,21 @@ $("settings").addEventListener("submit", async event => {
   if (!$("settings").reportValidity()) return;
   const controls = [...document.querySelectorAll("#settings input, #settings select, #settings button, #prompt")];
   const payload = settings();
+  if (payload.model === "ollama" && !installedModels.some(m => m.name === payload.ollama_model && m.supported)) {
+    status("Select an installed local GGUF model before generating.", "error");
+    return;
+  }
   controls.forEach(el => el.disabled = true);
   $("generate").textContent = "Generating…";
-  status("Loading model / generating locally… CPU generation may take a moment.", "busy");
+  status("Loading model / generating locally… Large GGUF models may take a while to load.", "busy");
   $("results").setAttribute("aria-busy", "true");
   try {
     result = await post("/api/generate", payload);
     selectedSide = "marked";
     selectedIndex = 0;
     render();
-    status(`Complete · ${result.model.name} · seed ${result.seed} · ${result.marked.token_count} tokens${result.key_ref ? " · key ref " + result.key_ref.slice(0,12) : ""}`);
+    const s = result.model.sampling;
+    status(`Complete · ${result.model.name} · ${result.model.backend} / ${result.model.device} · seed ${result.seed} · ${result.marked.token_count} tokens · T ${s.temperature} / k ${s.top_k} / p ${s.top_p}${result.key_ref ? " · key ref " + result.key_ref.slice(0,12) : ""}`);
   } catch (error) {
     status(error.message || "Connection lost. Check the local server terminal.", "error");
   } finally {
@@ -189,7 +247,7 @@ function select(side, index) {
   const dl = node("dl");
   const entries = [
     ["Position / ID", `${t.index+1} / ${t.token_id}`],
-    ["Context", t.context_text || "—"],
+    ["Context", t.context_text ? JSON.stringify(t.context_text) : "—"],
     ["Context IDs", t.context.join(", ") || "—"],
     ["State", t.special ? "Special token (neutral)" : t.scored ? t.kgw ? t.kgw.green ? "G · green" : "R · red" : "Scored" : t.reason]
   ];

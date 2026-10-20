@@ -12,15 +12,28 @@ class StrictConfig(BaseModel):
 
 
 class ModelConfig(StrictConfig):
+    backend: Literal["transformers", "ollama-gguf"] = "transformers"
     name: str = "builtin-tiny"
     revision: str | None = None
     device: Literal["cpu", "cuda"] = "cpu"
     max_new_tokens: int = Field(128, ge=16, le=4096)
     temperature: float = Field(1.0, gt=0, le=5)
+    top_k: int = Field(0, ge=0, le=1000000)
+    top_p: float = Field(1.0, gt=0, le=1)
     threads: int = Field(1, ge=1, le=64)
+    context_length: int = Field(2048, ge=128, le=32768)
+    offload: Literal["auto", "cpu", "gpu"] = "auto"
 
     @model_validator(mode="after")
     def pinned_revision(self):
+        if self.backend == "ollama-gguf":
+            if (
+                self.revision is None
+                or len(self.revision) != 64
+                or any(c not in "0123456789abcdef" for c in self.revision)
+            ):
+                raise ValueError("GGUF models require their full 64-character blob SHA-256")
+            return self
         if self.name != "builtin-tiny" and (
             self.revision is None
             or len(self.revision) != 40

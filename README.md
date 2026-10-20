@@ -59,15 +59,34 @@ Open **http://127.0.0.1:8765**. FastAPI and Uvicorn serve a small, bundled
 HTML/CSS/JavaScript interface; no Node.js, cloud API, telemetry or external web
 assets are required. The core CLI works without the GUI extra.
 
-Choose **builtin-tiny** for an offline software demonstration (random weights,
-synthetic words), or pinned **GPT-2** for natural-language continuations (first use
-may download weights). Explore **None**, **KGW**, and **SynthID**; compare plain and
+Choose **builtin-tiny** for an offline software demonstration, **GPT-2** as a
+small pinned reference, or **Ollama / local GGUF** for a supported modern local
+instruction model. The Windows validation used the already installed
+`qwen3.5:9b-q4_K_M`; no duplicate Qwen weights were downloaded. Explore **None**, **KGW**, and **SynthID**; compare plain and
 watermarked generation with the same seed; select tokens or step through context
 and watermark state. KGW shows green/red membership and cumulative z-scores;
 SynthID shows depth g-values and cumulative mean-g, explicitly **uncalibrated**.
 Detector scores are statistical evidence, never proof of authorship.
 
-![NullMark Visual Playground with paired GPT-2 generation](docs/images/playground-kgw.jpg)
+For existing Ollama models, install a compatible optional native inference build
+(see [CPU/Windows CUDA instructions](docs/playground.md#ollama-installed-gguf)), then:
+
+```sh
+pip install -e ".[gui,gguf]"
+nullmark model check-ollama "qwen3.5:9b-q4_K_M"
+nullmark playground
+```
+
+Ollama discovers installed weights on localhost. NullMark performs **direct GGUF
+inference**, applying the existing HF KGW/SynthID processors before each sample;
+it does not watermark a completed `/api/chat` response. Only self-contained local
+GGUFs with a supported embedded chat template are eligible; cloud models are not.
+
+Interactive defaults are temperature **0.8**, top-k **40**, top-p **0.95**, shown
+in the controls and result metadata. Historical Experiment 001 explicitly retains
+**1.0 / 0 / 1.0** and remains reproducible. Builtin-tiny's core defaults are unchanged.
+
+![NullMark Visual Playground using the installed Qwen GGUF](docs/images/playground-qwen.jpg)
 
 **CLI = authoritative reproducible experiment workflow.**
 **GUI = interactive exploration and demonstration.**

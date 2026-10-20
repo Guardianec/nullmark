@@ -15,6 +15,8 @@ it does not vendor their processor or detector source files.
 | PyYAML | https://github.com/yaml/pyyaml | MIT; YAML parsing |
 | FastAPI | https://github.com/fastapi/fastapi | MIT; optional local GUI server |
 | Starlette | https://github.com/encode/starlette | BSD-3-Clause; optional ASGI routing/middleware |
+| llama-cpp-python / llama.cpp | https://github.com/abetlen/llama-cpp-python | MIT; optional direct GGUF inference, native sampler and chat formatting |
+| Ollama | https://github.com/ollama/ollama | MIT; separately installed local model discovery; no inference API generation |
 | Uvicorn | https://github.com/encode/uvicorn | BSD-3-Clause; optional local ASGI serving |
 
 Copyright in Transformers' watermarking modules belongs to their upstream

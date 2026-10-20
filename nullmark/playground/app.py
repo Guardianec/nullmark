@@ -1,6 +1,7 @@
 """Optional FastAPI boundary: fixed assets, same-origin JSON, sanitized errors."""
 
 import logging
+from dataclasses import asdict
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -8,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from nullmark.models.ollama import LocalModelError, list_models
 from nullmark.playground.service import Playground, PlaygroundSettings
 
 ASSETS = Path(__file__).parent / "static"
@@ -70,6 +72,16 @@ def create_app() -> FastAPI:
         finally:
             playground.lock.release()
 
+    @app.get("/api/models")
+    def models():
+        try:
+            return {
+                "models": [asdict(m) for m in list_models()],
+                "status": "Installed local models",
+            }
+        except LocalModelError as exc:
+            return {"models": [], "status": str(exc)}
+
     @app.post("/api/generate")
     def generate(settings: PlaygroundSettings):
         if not playground.lock.acquire(blocking=False):
@@ -80,8 +92,12 @@ def create_app() -> FastAPI:
             # Upstream messages may embed keys: terminal logs retain type, never private values.
             logger.error("Generation failed (%s)", type(exc).__name__)
             message = "Generation failed. Check model availability and settings; see terminal logs."
-            if isinstance(exc, OSError):
-                message = "Model unavailable. Check the GPT-2 download or local model cache."
+            if isinstance(exc, LocalModelError):
+                message = str(exc)
+            elif isinstance(exc, OSError):
+                message = (
+                    "Model unavailable. Check local weights, file permissions or the GPT-2 cache."
+                )
             elif isinstance(exc, ValueError):
                 message = (
                     "Check settings: CUDA must be available; the prompt plus continuation "

@@ -6,17 +6,17 @@ import torch
 from transformers import WatermarkDetector, WatermarkingConfig
 
 from nullmark.config import KGWConfig
-from nullmark.models import CausalModel
+from nullmark.models import TextGenerationBackend
 from nullmark.watermark.base import DetectionResult, WatermarkScheme
 
 
 class KGWScheme(WatermarkScheme):
-    def __init__(self, model: CausalModel, config: KGWConfig, secret: dict):
+    def __init__(self, model: TextGenerationBackend, config: KGWConfig, secret: dict):
         self.model = model
         self.config = config
         self._secret = secret
-        green_count = int(model.model.config.vocab_size * config.greenlist_ratio)
-        if green_count < 1 or green_count >= model.model.config.vocab_size:
+        green_count = int(model.vocab_size * config.greenlist_ratio)
+        if green_count < 1 or green_count >= model.vocab_size:
             raise ValueError("greenlist_ratio produces an empty or full vocabulary partition")
 
     def generation_config(self) -> WatermarkingConfig:
@@ -32,18 +32,19 @@ class KGWScheme(WatermarkScheme):
     def detect(self, text: str) -> DetectionResult:
         ids = self.model.encode(text)
         cfg = self.config
-        eos = self.model.tokenizer.eos_token_id
-        if eos is not None and eos in ids:
-            ids = ids[: ids.index(eos)]
+        end = next(
+            (i for i, token in enumerate(ids) if token in self.model.eos_token_ids), len(ids)
+        )
+        ids = ids[:end]
         # HF strips an initial BOS; account for it in the insufficient-text check.
-        if ids and ids[0] == self.model.model.config.bos_token_id:
+        if ids and ids[0] == self.model.detector_config.bos_token_id:
             ids = ids[1:]
         if len(ids) <= cfg.context_width:
             return DetectionResult(
                 None, None, cfg.threshold, "z_score", 0, status="insufficient_text"
             )
         detector = self.detector()
-        tensor = torch.tensor([ids], dtype=torch.long, device=self.model.settings.device)
+        tensor = torch.tensor([ids], dtype=torch.long, device=self.model.watermark_device)
         result = detector(tensor, z_threshold=cfg.threshold, return_dict=True)
         score = float(result.z_score[0])
         # Use the standard normal survival function, rather than HF's approximate p-value.
@@ -58,8 +59,8 @@ class KGWScheme(WatermarkScheme):
 
     def detector(self) -> WatermarkDetector:
         return WatermarkDetector(
-            model_config=self.model.model.config,
-            device=self.model.settings.device,
+            model_config=self.model.detector_config,
+            device=self.model.watermark_device,
             watermarking_config=self.generation_config(),
             ignore_repeated_ngrams=self.config.ignore_repeated_ngrams,
         )

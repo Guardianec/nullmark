@@ -29,16 +29,24 @@
 <label for="model">Language model</label>
 <select id="model">
 <option value="builtin-tiny">builtin-tiny · offline</option>
-<option value="gpt2">GPT-2 · pretrained</option>
+<option value="gpt2">GPT-2 · reference</option>
+<option value="ollama">Ollama / local GGUF</option>
 </select>
 <p id="model-note" class="note">Fast, offline random-weight model. Synthetic word sequences; software demonstration only.</p>
+<div id="ollama-settings" hidden>
+<label for="ollama-model">Installed local model</label>
+<div class="local-model-picker"><select id="ollama-model" aria-describedby="ollama-status"><option value="">Refresh to discover models</option></select><button id="refresh-models" type="button" aria-label="Refresh installed models">↻</button></div>
+<p id="ollama-status" class="note" role="status">Discovery uses localhost:11434. No model download.</p>
+<details class="inference-options"><summary>Inference options</summary><label for="context-length">Context tokens</label><input id="context-length" type="number" min="128" max="8192" step="128" value="2048" required></details>
+</div>
 <div class="row">
 <div>
-<label for="device">Device</label>
+<label for="device" id="device-label">Device</label>
 <select id="device">
 <option value="cpu">CPU</option>
 <option value="cuda">CUDA</option>
 </select>
+<select id="offload" hidden aria-label="GGUF offload"><option value="auto">Auto</option><option value="cpu">CPU</option><option value="gpu">GPU · full offload</option></select>
 </div>
 <div>
 <label for="length">New tokens</label>
@@ -52,9 +60,10 @@
 </div>
 <div>
 <label for="temperature">Temperature</label>
-<input id="temperature" type="number" min="0.05" max="5" step="0.05" value="1" required>
+<input id="temperature" type="number" min="0.05" max="5" step="0.05" value="0.8" required>
 </div>
 </div>
+<div class="row"><div><label for="top-k">Top-k (0 = all)</label><input id="top-k" type="number" min="0" max="1000000" value="40" required></div><div><label for="top-p">Top-p</label><input id="top-p" type="number" min="0.01" max="1" step="0.01" value="0.95" required></div></div>
 <div class="section-title separated">
 <span>02 / WATERMARK</span>
 <span>⌁</span>

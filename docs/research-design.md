@@ -59,7 +59,7 @@ conditions use the same sampling seed; different prompt/key pairs use a SHA-256
 derived seed. Process-global deterministic algorithms and configured thread counts
 are recorded; CPU is the tested backend. The built-in smoke model's fixed weight
 initialization seed is independent of both generation and watermark randomness.
-Full pretrained model commit IDs are mandatory, remote model code is disabled,
+For Transformers, full pretrained model commit IDs are mandatory, remote model code is disabled,
 and only safetensors weights are loaded. Tokenizer and model use the same revision.
 The prompt subset, dataset digest, package versions, platform, source Git revision
 when available, model identifier and configuration are stored in every run.
@@ -149,3 +149,27 @@ feedback, never an attack interface or blind attacker input. It does not execute
 transformations or benchmark suites. Generation-context token views and the
 retokenized continuation-only detector trace are explicitly separate. The CLI
 remains authoritative for replayable experiments. See [playground](playground.md).
+
+
+### Direct GGUF amendment
+
+Supported Ollama-installed GGUFs are discovered only on loopback; direct
+llama-cpp-python inference passes exact native prefix IDs and full-vocabulary
+logits through the same HF watermark processors before sampling. Native custom
+callbacks are checked against actual prefix IDs, vocabulary shape and sample
+counts; exceptions are raised outside ctypes and no unmarked fallback sample is
+returned. The GGUF blob is SHA-256 verified before loading. Chat-template digest,
+backend/version, quantization, context/offload and sampling are recorded, without
+absolute blob paths. Formatted prompt IDs are retained in private token records.
+
+The native order is watermark transformation, then native top-k/top-p/temperature
+sampling with neutral repetition penalty and disabled min-p. Transformers retains
+its pinned processor ordering. Equal numeric settings do not promise identical
+sampling behavior across engines, vocabularies, quantization or hardware.
+
+Core sampling defaults and Experiment 001 retain temperature 1, top-k 0, top-p 1;
+interactive defaults are explicitly 0.8/40/0.95. No detector threshold was tuned to
+make the Qwen examples positive. At these low-entropy instruction continuations,
+consistent correct-key signal gain need not cross the historical uncalibrated
+threshold. This is a usability/backend smoke check, not a semantic-quality metric,
+calibration study or attack milestone.

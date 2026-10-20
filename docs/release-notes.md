@@ -2,7 +2,10 @@ NullMark v0.1.1 adds the **Visual Playground**, a local interactive view of the
 existing watermark generation and detection pipeline.
 
 - Optional FastAPI/Uvicorn interface with bundled assets and localhost defaults.
-- Offline builtin-tiny and pinned GPT-2; None, KGW and SynthID modes.
+- Offline builtin-tiny, pinned GPT-2 and optional supported Ollama-installed GGUFs.
+- Direct native inference with exact IDs, embedded chat formatting and real per-token HF watermark hooks.
+- Visible temperature/top-k/top-p controls; historical Experiment 001 retains its original settings.
+- Local model capability diagnostic and Windows Qwen 3.5 9B validation without duplicate weights.
 - Same-seed plain/marked comparison, first divergence, token inspector and stepper.
 - KGW context-aware membership and cumulative detector z-score traces.
 - SynthID per-depth g-values and cumulative mean-g, explicitly uncalibrated.

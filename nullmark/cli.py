@@ -26,6 +26,14 @@ def parser() -> argparse.ArgumentParser:
     playground = commands.add_parser("playground", help="Launch the local Visual Playground")
     playground.add_argument("--host", choices=("127.0.0.1", "localhost"), default="127.0.0.1")
     playground.add_argument("--port", type=int, default=8765)
+    model = commands.add_parser("model", help="Check an installed local inference backend")
+    model_commands = model.add_subparsers(dest="model_command", required=True)
+    check = model_commands.add_parser(
+        "check-ollama", help="Verify GGUF logits and watermark capability"
+    )
+    check.add_argument("name", help="Exact installed Ollama model name; never pulls weights")
+    check.add_argument("--offload", choices=("auto", "cpu", "gpu"), default="auto")
+    check.add_argument("--tokens", type=int, default=128)
     for command in ("generate", "detect"):
         sub = commands.add_parser(command, help=f"{command.capitalize()} a local controlled sample")
         sub.add_argument("--config", type=Path, required=True)
@@ -59,6 +67,16 @@ def parser() -> argparse.ArgumentParser:
 
 
 def execute(args) -> int:
+    if args.command == "model":
+        from nullmark.models.diagnostics import check_ollama
+        from nullmark.models.ollama import LocalModelError
+
+        try:
+            report = check_ollama(args.name, offload=args.offload, tokens=args.tokens)
+        except LocalModelError as exc:
+            raise CLIError(str(exc)) from None
+        print(json.dumps(report, indent=2, allow_nan=False))
+        return int(not report["passed"])
     if args.command == "playground":
         if not 1 <= args.port <= 65535:
             raise CLIError("port must be between 1 and 65535")
@@ -95,10 +113,10 @@ def execute(args) -> int:
             "--secrets is required; run a tiny experiment to create a private master file"
         )
     from nullmark.evaluation.secrets import KeyStore
-    from nullmark.models import CausalModel
+    from nullmark.models import load_model
     from nullmark.watermark.registry import load_scheme
 
-    model = CausalModel(config.model)
+    model = load_model(config.model)
     scheme = None
     if args.scheme != "none":
         store = KeyStore.load(args.secrets)
@@ -119,6 +137,7 @@ def execute(args) -> int:
         print(
             json.dumps(scheme.detect(args.text_file.read_text("utf-8")).to_dict(), allow_nan=False)
         )
+    model.close()
     return 0
 
 

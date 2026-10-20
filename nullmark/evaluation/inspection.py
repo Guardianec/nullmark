@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 import torch
 
-from nullmark.models import CausalModel, Generation
+from nullmark.models import Generation, TextGenerationBackend
 from nullmark.watermark.base import DetectionResult, WatermarkScheme
 from nullmark.watermark.kgw import KGWScheme
 from nullmark.watermark.synthid import SynthIDScheme
@@ -62,13 +62,13 @@ class PairedGeneration:
     first_divergence: int | None
 
 
-def _decode(model: CausalModel, ids: list[int]) -> str:
-    return model.tokenizer.decode(ids, clean_up_tokenization_spaces=False)
+def _decode(model: TextGenerationBackend, ids: list[int]) -> str:
+    return model.decode(ids)
 
 
 @torch.inference_mode()
 def inspect_tokens(
-    model: CausalModel,
+    model: TextGenerationBackend,
     scheme: WatermarkScheme | None,
     ids: list[int],
     *,
@@ -79,16 +79,14 @@ def inspect_tokens(
     prefix = prompt_ids or []
     full = prefix + ids
     offset = len(prefix)
-    device = model.settings.device
-    special = set(model.tokenizer.all_special_ids)
+    device = model.watermark_device
+    special = model.special_token_ids
     processor = None
     detector = None
     values, mask = None, None
     width = 0
     if scheme is not None:
-        processor = scheme.generation_config().construct_processor(
-            model.model.config.vocab_size, device
-        )
+        processor = scheme.generation_config().construct_processor(model.vocab_size, device)
         width = (
             scheme.config.context_width
             if isinstance(scheme, KGWScheme)
@@ -105,14 +103,14 @@ def inspect_tokens(
     count, total = 0, 0
     rows = []
     ended = False
-    start = int(not generation and bool(ids) and ids[0] == model.model.config.bos_token_id)
+    start = int(not generation and bool(ids) and ids[0] == model.detector_config.bos_token_id)
     for i, token in enumerate(ids):
         pos = offset + i
         context = full[max(start if not generation else 0, pos - width) : pos]
         scored = scheme is not None and len(context) == width and i >= start
         reason = "scored" if scored else "initial context" if scheme else "no detector selected"
         kgw, synthid = None, None
-        if token == model.tokenizer.eos_token_id:
+        if token in model.eos_token_ids:
             ended = True
         if ended:
             scored, reason = False, "special token / EOS suffix"
@@ -153,14 +151,21 @@ def inspect_tokens(
 
 
 def inspect_sample(
-    model: CausalModel, scheme: WatermarkScheme | None, prompt: str, sample: Generation
+    model: TextGenerationBackend, scheme: WatermarkScheme | None, prompt: str, sample: Generation
 ) -> InspectedSample:
     retokenized = model.encode(sample.text)
     return InspectedSample(
         sample.text,
         len(sample.token_ids),
         sample.seconds,
-        inspect_tokens(model, scheme, sample.token_ids, prompt_ids=model.encode(prompt)),
+        inspect_tokens(
+            model,
+            scheme,
+            sample.token_ids,
+            prompt_ids=sample.prompt_token_ids
+            if sample.prompt_token_ids is not None
+            else model.encode_prompt(prompt),
+        ),
         inspect_tokens(model, scheme, retokenized),
         scheme.detect(sample.text) if scheme else None,
         retokenized == sample.token_ids,
@@ -168,7 +173,7 @@ def inspect_sample(
 
 
 def paired_generation(
-    model: CausalModel,
+    model: TextGenerationBackend,
     scheme: WatermarkScheme | None,
     prompt: str,
     *,
