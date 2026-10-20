@@ -165,6 +165,11 @@ config/dataset/calibration/key identity. Successful cached transformations are r
 without inference; failed attempts remain explicitly recorded. Generation and attack
 runtimes are closed between stages so the GPU does not need two model copies.
 
+The resolved config points to saved selected prompts, calibration prompts and
+unchanged evaluator snapshots within the run directory. Use that resolved config
+with a new output directory for replay; resume an existing run with the same
+configuration values originally used for that run.
+
 Run files: resolved config and identity/manifest; public `source_samples.jsonl` and
 eligible `attack_inputs.jsonl`; public per-family `attacks/*.jsonl`; evaluator-only
 `baselines.jsonl`, `evaluation.jsonl`, `quality.jsonl`, `metrics.json`; summary, plots

@@ -28,7 +28,7 @@ eligible denominator. Semantic similarity, exact word/token edits, length ratio,
 lexical similarity and factual-anchor retention expose the preservation tradeoff.
 Embedding cosine is **not factual correctness**.
 
-![Original, diff and attacked text with quality and detector comparison](docs/images/playground-attacks.png)
+![Original, diff and attacked text with quality and detector comparison](docs/images/playground-attacks.jpg)
 
 [Methodology and reproducibility](docs/baseline-attacks.md) ·
 [Measured Qwen results](docs/baseline-attack-results.md) ·

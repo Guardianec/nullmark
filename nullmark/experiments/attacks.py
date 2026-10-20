@@ -4,6 +4,7 @@ import hashlib
 import json
 from dataclasses import asdict
 from datetime import UTC, datetime
+from functools import lru_cache
 from time import perf_counter
 from typing import Literal
 
@@ -229,6 +230,16 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
         model = load_model(config.model)
         try:
             evaluators = {s: scheme_for(model, s) for s in artifacts}
+
+            @lru_cache(maxsize=8192)
+            def measure_quality(original, text):
+                return quality_metrics(original, text, tokenize=model.encode, semantic=semantic)
+
+            @lru_cache(maxsize=8192)
+            def post_detection(name, text):
+                scheme, context = evaluators[name]
+                return artifacts[name].evaluate(scheme.detect(text), context=context)
+
             baseline_by_id = {r["sample_id"]: r for r in baselines}
             existing = {
                 (r["sample_id"], r["attack"], r["budget"])
@@ -245,12 +256,7 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
                     if not row["failure"]:
                         text = row["output"]["text"]
                         # Quality precedes the post-attack watermark detector.
-                        quality = quality_metrics(
-                            sources[row["sample_id"]].text,
-                            text,
-                            tokenize=model.encode,
-                            semantic=semantic,
-                        )
+                        quality = measure_quality(sources[row["sample_id"]].text, text)
                         evaluated["quality"] = quality
                         append(
                             output / "quality.jsonl",
@@ -261,10 +267,7 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
                                 **quality,
                             },
                         )
-                        scheme, context = evaluators[baseline["scheme"]]
-                        evaluated["after"] = artifacts[baseline["scheme"]].evaluate(
-                            scheme.detect(text), context=context
-                        )
+                        evaluated["after"] = post_detection(baseline["scheme"], text)
                     evaluated["outcome"] = outcome(
                         baseline["before"], evaluated["after"], failure=bool(row["failure"])
                     )
@@ -273,13 +276,32 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
             model.close()
         from nullmark.experiments.attack_report import report
 
-        metrics = aggregate(baselines, read_jsonl(output / "evaluation.jsonl"))
+        evaluated_rows = read_jsonl(output / "evaluation.jsonl")
+        # Evaluation rows are authoritative if a resume follows an interrupted quality append.
+        (output / "quality.jsonl").write_text(
+            "".join(
+                json.dumps(
+                    {
+                        "sample_id": r["sample_id"],
+                        "attack": r["attack"],
+                        "budget": r["budget"],
+                        **r["quality"],
+                    },
+                    allow_nan=False,
+                )
+                + "\n"
+                for r in evaluated_rows
+                if "quality" in r
+            ),
+            "utf-8",
+        )
+        metrics = aggregate(baselines, evaluated_rows)
         write_json(output / "metrics.json", metrics)
         report(output, metrics)
         manifest = json.loads((output / "manifest.json").read_text("utf-8"))
         manifest["stage"] = "complete"
         manifest["expected_attempts"] = len(eligible) * 16
-        manifest["evaluated_attempts"] = len(read_jsonl(output / "evaluation.jsonl"))
+        manifest["evaluated_attempts"] = len(evaluated_rows)
         write_json(output / "manifest.json", manifest)
     # Frozen evaluator files must remain byte-for-byte unchanged.
     assert frozen_hashes == {
