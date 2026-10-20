@@ -11,11 +11,9 @@ import urllib.request
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from nullmark.common.errors import LocalModelError
+
 BASE = "http://127.0.0.1:11434"
-
-
-class LocalModelError(ValueError):
-    """Safe researcher-facing diagnostic, without private paths or server bodies."""
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):

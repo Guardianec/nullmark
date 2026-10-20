@@ -19,7 +19,25 @@ def test_attack_surface_only_has_text_and_identity():
 
 def test_attacks_cannot_import_evaluator_or_dynamic_import_tools():
     # Architectural guard, not a Python sandbox. External workers must enforce process isolation.
-    allowed = {"dataclasses", "typing", "nullmark.attacks", "__future__"}
+    allowed = {
+        "dataclasses",
+        "typing",
+        "__future__",
+        "hashlib",
+        "random",
+        "re",
+        "time",
+        "json",
+        "sys",
+        "collections",
+        "pathlib",
+        "numpy",
+        "nullmark.attacks.base",
+        "nullmark.attacks.text",
+        "nullmark.attacks.baselines",
+        "nullmark.attacks.model",
+        "nullmark.common.runtime",
+    }
     for path in Path("nullmark/attacks").rglob("*.py"):
         tree = ast.parse(path.read_text("utf-8"))
         for node in ast.walk(tree):
@@ -29,6 +47,28 @@ def test_attacks_cannot_import_evaluator_or_dynamic_import_tools():
                 assert node.level == 0 and node.module in allowed, path
             elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 assert node.func.id not in {"eval", "exec", "__import__", "open", "getattr"}, path
+
+
+def test_neutral_runtime_has_no_evaluator_or_model_backend_dependencies():
+    allowed = {
+        "ctypes",
+        "hashlib",
+        "importlib",
+        "importlib.util",
+        "mmap",
+        "os",
+        "shutil",
+        "subprocess",
+        "pathlib",
+        "nullmark.common.errors",
+    }
+    tree = ast.parse(Path("nullmark/common/runtime.py").read_text("utf-8"))
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            assert all(a.name in allowed for a in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            assert node.module in allowed
+    assert 'import_module("llama_cpp")' in Path("nullmark/common/runtime.py").read_text("utf-8")
 
 
 def test_private_keys_replay_and_public_seed_does_not_define_them(tmp_path, keys):

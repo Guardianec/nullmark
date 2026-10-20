@@ -182,6 +182,8 @@ def test_gpu_build_capability_check():
 
 
 def test_missing_optional_runtime(monkeypatch):
-    monkeypatch.setattr(gguf.importlib.util, "find_spec", lambda name: None)
+    import nullmark.common.runtime as runtime
+
+    monkeypatch.setattr(runtime.importlib.util, "find_spec", lambda name: None)
     with pytest.raises(LocalModelError, match=r"\[gguf\]"):
         gguf.llama_module()

@@ -1,6 +1,6 @@
-"""The only information passed to a future blind text transformation."""
+"""The public, detector-blind transformation interface."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 
@@ -11,5 +11,22 @@ class AttackInput:
     text: str
 
 
+@dataclass(frozen=True)
+class AttackOutput:
+    text: str
+    attack: str
+    version: str
+    seed: int
+    requested_budget: float | None
+    input_sha256: str
+    model_digest: str
+    sampling: dict
+    template_version: str
+    actual_word_edits: int
+    actual_token_edits: int
+    runtime_seconds: float
+    warnings: list[str] = field(default_factory=list)
+
+
 class TextTransform(Protocol):
-    def transform(self, sample: AttackInput, *, seed: int) -> str: ...
+    def transform(self, sample: AttackInput, *, seed: int) -> AttackOutput: ...
