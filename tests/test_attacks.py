@@ -272,6 +272,7 @@ def test_aggregate_keeps_failures_and_abstention_and_quality_denominators():
             }
         )
     group = aggregate(baseline, rows)["groups"][0]
+    assert json.loads(json.dumps(group, allow_nan=False)) == group
     assert group["evasion_rate"] == group["abstention_rate"] == 0.25
     assert group["completion_rate"] == 0.75
     assert group["quality_conditioned"]["0.95"]["denominator"] == 2

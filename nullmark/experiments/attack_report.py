@@ -82,6 +82,39 @@ def report(output: Path, metrics):
                 f"at budget {preserving['budget']}. Compare actual edits, failures and "
                 "quality bands before interpreting this ordering."
             )
+            strongest = max(
+                subset,
+                key=lambda r: r["distributions"]["score_reduction"]["mean"]
+                if r["distributions"]["score_reduction"]["mean"] is not None
+                else -1e9,
+            )
+            lines.append(
+                f"- {scheme}: largest paired mean score reduction is "
+                f"{strongest['attack']} at {strongest['budget']}: "
+                f"{number(strongest['distributions']['score_reduction']['mean'])}. "
+                "This is a within-scheme comparison only."
+            )
+            observed = sorted(
+                r["budget"] for r in subset if r["budget"] is not None and r["evasion_rate"] > 0
+            )
+            lines.append(
+                f"- {scheme}: sparse requested budgets with at least one observed "
+                f"evasion: {sorted(set(observed)) or 'none'}. This is a fixed sweep, "
+                "not an estimate of the minimum successful edit budget."
+            )
+            for budget in (0.01, 0.02, 0.05, 0.1, 0.2):
+                pair = {r["attack"]: r for r in subset if r["budget"] == budget}
+                if {"entropy_rewrite", "random_edit"} <= pair.keys():
+                    entropy, random = pair["entropy_rewrite"], pair["random_edit"]
+                    lines.append(
+                        f"- {scheme}, requested {budget:.0%}: entropy evasion "
+                        f"{entropy['evasion_rate']:.1%}, random {random['evasion_rate']:.1%}; "
+                        "mean actual word edits "
+                        f"{number(entropy['distributions']['word_edit_fraction']['mean'])} "
+                        f"vs {number(random['distributions']['word_edit_fraction']['mean'])}. "
+                        "Different candidate availability prevents attributing the whole "
+                        "difference to position selection alone."
+                    )
     lines += [
         "",
         "Score units differ between KGW and SynthID; compare within each scheme. "
