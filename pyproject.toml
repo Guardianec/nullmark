@@ -19,6 +19,7 @@ dev = ["pytest>=8,<9", "ruff==0.14.14", "build>=1,<2"]
 gui = ["fastapi>=0.115.14,<0.116", "uvicorn>=0.34.3,<0.35"]
 gui-test = ["httpx>=0.28,<1"]
 gguf = ["llama-cpp-python==0.3.36"]
+evaluation = ["sentence-transformers==3.4.1", "matplotlib>=3.9,<4"]
 
 [project.scripts]
 nullmark = "nullmark.cli:main"

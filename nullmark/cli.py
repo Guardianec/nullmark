@@ -23,6 +23,16 @@ def parser() -> argparse.ArgumentParser:
     )
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
+    attacks = commands.add_parser(
+        "benchmark-attacks", help="Run frozen baseline Attack Experiment 003"
+    )
+    attacks.add_argument("config", type=Path)
+    attacks.add_argument("--output", type=Path, required=True)
+    attacks.add_argument("--secrets", type=Path, required=True)
+    attacks.add_argument(
+        "--stage", choices=("all", "generate", "attack", "evaluate"), default="all"
+    )
+    attacks.add_argument("--resume", action="store_true")
     calibrate = commands.add_parser("calibrate", help="Calibrate frozen detector operating points")
     calibrate.add_argument("config", type=Path)
     calibrate.add_argument("--output", type=Path)
@@ -73,6 +83,18 @@ def parser() -> argparse.ArgumentParser:
 
 
 def execute(args) -> int:
+    if args.command == "benchmark-attacks":
+        from nullmark.experiments.attacks import run_benchmark
+
+        output = run_benchmark(
+            args.config,
+            output=args.output,
+            secrets_path=args.secrets,
+            stage=args.stage,
+            resume=args.resume,
+        )
+        print(f"Results: {output.resolve()}")
+        return 0
     if args.command == "calibrate":
         from nullmark.experiments.calibration import run_calibration
 
