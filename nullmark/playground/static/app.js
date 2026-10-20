@@ -124,6 +124,9 @@ async function post(path, payload) {
 $("fresh").addEventListener("click", async () => {
   try {
     await post("/api/key", {});
+    $("attack-run").disabled = true;
+    $("attack-comparison").hidden = true;
+    $("attack-status").textContent = "Generate a new sample to use the fresh hidden key.";
     $("key-note").textContent = "Fresh hidden configuration created. Previous results retain their original key context.";
     status("Fresh hidden key ready for the next generation.");
   } catch (error) {
@@ -145,6 +148,9 @@ $("settings").addEventListener("submit", async event => {
   $("results").setAttribute("aria-busy", "true");
   try {
     result = await post("/api/generate", payload);
+    $("attack-run").disabled = result.scheme === "none";
+    $("attack-comparison").hidden = true;
+    $("attack-status").textContent = "Ready to transform the watermarked continuation.";
     selectedSide = "marked";
     selectedIndex = 0;
     render();
@@ -157,6 +163,96 @@ $("settings").addEventListener("submit", async event => {
     $("generate").replaceChildren(document.createTextNode("Generate continuation "), node("span", "↗"));
     $("results").removeAttribute("aria-busy");
     updateControls();
+  }
+});
+
+function TextComparison(data) {
+  const panels = [];
+  for (const [title, text] of [["Original Watermarked", data.original], ["Diff · − deleted / + inserted", null], ["Attacked", data.attack.text]]) {
+    const article = node("article", null, "comparison-text");
+    article.append(node("h3", title));
+    const content = node("div", text, "comparison-prose");
+    if (text === null) data.diff.forEach(part => {
+      if (part.operation === "equal") content.append(document.createTextNode(part.before));
+      else {
+        if (part.before) {
+          const deletion = node("del", part.before);
+          deletion.title = "Deleted";
+          content.append(node("span", "−", "diff-sign"), deletion);
+        }
+        if (part.after) {
+          const insertion = node("ins", part.after);
+          insertion.title = "Inserted";
+          content.append(node("span", "+", "diff-sign"), insertion);
+        }
+      }
+    });
+    article.append(content);
+    panels.push(article);
+  }
+  const panes = panels.map(panel => panel.querySelector(".comparison-prose"));
+  panes.forEach(pane => pane.addEventListener("scroll", () => {
+    const ratio = pane.scrollTop / Math.max(1, pane.scrollHeight - pane.clientHeight);
+    panes.filter(other => other !== pane).forEach(other => {
+      const position = ratio * (other.scrollHeight - other.clientHeight);
+      if (Math.abs(other.scrollTop - position) > 1) other.scrollTop = position;
+    });
+  }));
+  return panels;
+}
+
+function MetricComparison(quality) {
+  return [
+    ["Semantic similarity", quality.semantic_similarity == null ? "Unavailable" : fmt(quality.semantic_similarity)],
+    ["Word edit fraction", `${(quality.word_edit_fraction*100).toFixed(1)}%`],
+    ["Token edit fraction", `${(quality.token_edit_fraction*100).toFixed(1)}%`],
+    ["Length ratio", fmt(quality.length_ratio)],
+    ["Lexical similarity", fmt(quality.lexical_similarity)],
+    ["Anchors retained", `${quality.anchors_retained} / ${quality.anchors_total}`]
+  ].map(([label, value]) => {
+    const metric = node("div", null, "stat");
+    metric.append(node("span", label), node("strong", value));
+    return metric;
+  });
+}
+
+function DetectorComparison(data) {
+  return [["BEFORE", data.before], ["AFTER", data.after]].map(([label, detection]) => {
+    const panel = node("div", null, "detector-result");
+    panel.append(node("h4", label), node("strong", detection.state),
+      node("p", `Score ${fmt(detection.score)} · threshold ${fmt(detection.threshold)}`));
+    return panel;
+  });
+}
+
+function AttackControls() {
+  $("budget-control").hidden = $("attack-name").value === "paraphrase";
+}
+$("attack-name").addEventListener("change", AttackControls);
+$("attack-controls").addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!result) return;
+  const controls = [...document.querySelectorAll("#attack-controls input, #attack-controls select, #attack-controls button")];
+  controls.forEach(el => el.disabled = true);
+  $("generate").disabled = true;
+  $("attack-status").textContent = "Transforming locally, then measuring quality and frozen detector evidence…";
+  $("attack-comparison").hidden = true;
+  try {
+    const data = await post("/api/attack", {
+      generation_id: result.generation_id, attack: $("attack-name").value,
+      budget: $("attack-name").value === "paraphrase" ? null : num("attack-budget"), seed: num("attack-seed")
+    });
+    $("text-comparison").replaceChildren(...TextComparison(data));
+    $("quality-comparison").replaceChildren(...MetricComparison(data.quality));
+    $("detector-comparison").replaceChildren(...DetectorComparison(data));
+    $("eligibility").textContent = data.eligibility_message;
+    $("attack-status").textContent = `${data.outcome} · ${data.attack.actual_word_edits} word edits · ${data.attack.runtime_seconds.toFixed(2)}s · ${[...data.attack.warnings, ...data.warnings].join(" · ")}`;
+    $("attack-comparison").hidden = false;
+  } catch (error) {
+    $("attack-status").textContent = error.message;
+  } finally {
+    controls.forEach(el => el.disabled = false);
+    $("generate").disabled = false;
   }
 });
 

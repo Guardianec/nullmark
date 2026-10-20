@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from nullmark.models.ollama import LocalModelError, list_models
-from nullmark.playground.service import Playground, PlaygroundSettings
+from nullmark.playground.service import AttackSettings, Playground, PlaygroundSettings
 
 ASSETS = Path(__file__).parent / "static"
 logger = logging.getLogger("nullmark.playground")
@@ -124,6 +124,24 @@ def create_app(*, keys=None, calibrations=()) -> FastAPI:
                     "must fit the model context (GPT-2: 1024 tokens). Try a shorter prompt."
                 )
             return JSONResponse({"error": message}, status_code=400)
+        finally:
+            playground.lock.release()
+
+    @app.post("/api/attack")
+    def attack(settings: AttackSettings):
+        if not playground.lock.acquire(blocking=False):
+            return JSONResponse({"error": "Local inference is still running."}, status_code=409)
+        try:
+            return playground.attack(settings)
+        except Exception as exc:
+            logger.error("Attack failed (%s)", type(exc).__name__)
+            return JSONResponse(
+                {
+                    "error": "Attack failed. Generate a current sample, check the "
+                    "budget and local Qwen availability. No evasion was counted."
+                },
+                status_code=400,
+            )
         finally:
             playground.lock.release()
 

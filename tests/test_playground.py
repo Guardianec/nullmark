@@ -22,6 +22,8 @@ def test_fixed_routes_and_local_boundary(client):
     assert "frame-ancestors 'none'" in page.headers["Content-Security-Policy"]
     assert client.get("/assets/app.js").status_code == 200
     assert client.get("/assets/style.css").status_code == 200
+    assert 'id="attack-controls"' in page.text
+    assert 'id="text-comparison"' in page.text
     for path in ("/private/secrets.json", "/assets/secrets.json", "/assets/../service.py"):
         assert client.get(path).status_code == 404
     assert client.get("/", headers={"Host": "evil.example"}).status_code == 400
@@ -37,6 +39,45 @@ def test_fixed_routes_and_local_boundary(client):
         ).status_code
         == 413
     )
+
+
+def test_attack_route_offline_and_ineligible_baseline(client, monkeypatch, tmp_path):
+    from nullmark.evaluation.quality import SemanticSimilarity
+
+    def unavailable(self, **kwargs):
+        raise ValueError("optional model not installed")
+
+    monkeypatch.setattr(SemanticSimilarity, "__init__", unavailable)
+    monkeypatch.chdir(tmp_path)
+    generated = client.post("/api/generate", json={"prompt": "word1", "max_new_tokens": 32}).json()
+    response = client.post(
+        "/api/attack",
+        json={"generation_id": generated["generation_id"], "attack": "random_edit", "budget": 0.1},
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert not data["eligible"]
+    assert data["outcome"] == "BASELINE ABSTENTION"
+    assert data["after"]["state"] == "INSUFFICIENT EVIDENCE"
+    assert "insufficient detector evidence" in data["eligibility_message"]
+    assert "".join(r["before"] for r in data["diff"]) == data["original"]
+    assert "".join(r["after"] for r in data["diff"]) == data["attack"]["text"]
+    assert data["quality"]["semantic_similarity"] is None
+    assert set(data["attack"]).isdisjoint({"key_ref", "score", "threshold", "calibration_id"})
+
+
+def test_attack_route_rejects_stale_generation_and_private_fields(client):
+    request = {"generation_id": "a" * 32, "attack": "random_edit", "budget": 0.1}
+    assert client.post("/api/attack", json=request).status_code == 400
+    assert client.post("/api/attack", json={**request, "key_ref": "private"}).status_code == 422
+
+
+def test_attack_ui_uses_text_nodes_and_accessible_diff(client):
+    script = client.get("/assets/app.js").text
+    assert 'node("del", part.before)' in script and 'node("ins", part.after)' in script
+    assert '"diff-sign"' in script
+    for component in ("TextComparison", "MetricComparison", "DetectorComparison", "AttackControls"):
+        assert f"function {component}" in script
 
 
 @pytest.mark.parametrize("name", ["none", "kgw", "synthid"])

@@ -3,6 +3,7 @@
 from dataclasses import asdict
 from threading import Lock
 from typing import Literal
+from uuid import uuid4
 
 from pydantic import Field
 
@@ -20,6 +21,13 @@ from nullmark.watermark.kgw import KGWScheme
 from nullmark.watermark.synthid import SynthIDScheme
 
 GPT2_REVISION = "607a30d783dfa663caf39e06633721c8d4cfcd7e"
+
+
+class AttackSettings(StrictConfig):
+    generation_id: str = Field(pattern=r"^[0-9a-f]{32}$")
+    attack: Literal["random_edit", "synonym_replace", "paraphrase", "entropy_rewrite"]
+    budget: float | None = Field(None, gt=0, le=0.2)
+    seed: int = Field(42, ge=0, lt=2**32 - 1)
 
 
 class PlaygroundSettings(StrictConfig):
@@ -51,9 +59,14 @@ class Playground:
         }
         self._models: dict[tuple, TextGenerationBackend] = {}
         self.lock = Lock()
+        self.last_result = None
+        self.last_settings = None
+        self.last_model_config = None
+        self.semantic = None
 
     def fresh_key(self) -> dict:
         self._keys = KeyStore.create()
+        self.last_result = None
         return {"status": "fresh hidden key configuration"}
 
     def generate(self, settings: PlaygroundSettings) -> dict:
@@ -151,4 +164,97 @@ class Playground:
                         }
                 else:
                     sample["detection"] = uncalibrated(raw)
+        result["generation_id"] = uuid4().hex
+        self.last_result = result
+        self.last_settings = settings
+        self.last_model_config = config
         return result
+
+    def attack(self, settings: AttackSettings) -> dict:
+        from pathlib import Path
+
+        from nullmark.attacks.base import AttackInput
+        from nullmark.evaluation.attack_metrics import outcome
+        from nullmark.evaluation.attack_worker import AttackWorker
+        from nullmark.evaluation.quality import SemanticSimilarity, quality_metrics, text_diff
+
+        original = self.last_result
+        if original is None or original["generation_id"] != settings.generation_id:
+            raise ValueError("Generate a sample before attacking it")
+        if original["scheme"] == "none":
+            raise ValueError("Select a watermark scheme before attacking")
+        if settings.attack != "paraphrase" and settings.budget is None:
+            raise ValueError("Sparse attacks require an edit budget")
+        public_model = None
+        if settings.attack != "random_edit":
+            local = resolve_model("qwen3.5:9b-q4_K_M")
+            public_model = {
+                "model_path": str(local.path),
+                "model_digest": local.blob_sha256,
+                "offload": self.last_settings.offload,
+            }
+        # Release GPU generation resources before the independent attack runtime.
+        for model in self._models.values():
+            model.close()
+        self._models.clear()
+        sample = AttackInput(
+            original["generation_id"], self.last_settings.prompt, original["marked"]["text"]
+        )
+        with AttackWorker(model=public_model, cache=Path(".cache/playground-attacks")) as worker:
+            attacked = worker.transform(
+                sample, attack=settings.attack, budget=settings.budget, seed=settings.seed
+            )
+        model = load_model(self.last_model_config)
+        try:
+            warnings = []
+            if self.semantic is None:
+                try:
+                    self.semantic = SemanticSimilarity()
+                except (ImportError, ValueError, OSError):
+                    warnings.append(
+                        "Semantic similarity unavailable; install/cache the pinned evaluator"
+                    )
+            quality = quality_metrics(
+                sample.text, attacked.text, tokenize=model.encode, semantic=self.semantic
+            )
+            name = original["scheme"]
+            private = self._keys.derive(
+                name, self.last_settings.key_index, self.last_settings.synthid.depth
+            )
+            scheme = (
+                KGWScheme(model, self.last_settings.kgw, private)
+                if name == "kgw"
+                else SynthIDScheme(model, self.last_settings.synthid, private)
+            )
+            artifact = self.calibrations.get(self.last_settings.calibration_id)
+            raw = scheme.detect(attacked.text)
+            context = conditions(model, scheme, original["key_ref"])
+            if artifact:
+                artifact.require_compatible(context)
+                after = artifact.evaluate(raw, context=context)
+            else:
+                after = uncalibrated(raw)
+            before = original["marked"]["detection"]
+            eligible = before["state"] == "DETECTED"
+            message = (
+                "Eligible detected baseline."
+                if eligible
+                else "This sample is not eligible for evasion evaluation because the original "
+                "watermark was not detected by the frozen evaluator."
+                if before["state"] == "NOT DETECTED"
+                else "The original sample has insufficient detector evidence."
+            )
+            return {
+                "original": sample.text,
+                "attack": asdict(attacked),
+                "quality": quality,
+                "diff": text_diff(sample.text, attacked.text),
+                "before": before,
+                "after": after,
+                "eligible": eligible,
+                "eligibility_message": message,
+                "outcome": outcome(before, after),
+                "warnings": warnings,
+            }
+        finally:
+            model.close()

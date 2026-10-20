@@ -226,9 +226,34 @@
 </section>
 </div>
 </section>
+<section id="attack-lab" class="panel" aria-label="Baseline attack comparison">
+<div class="panel-heading"><h2>Baseline attacks</h2><span>TEXT TRANSFORMATION</span></div>
+<p class="note">Keyless · detector-blind · one pass. Compare edits with the original continuation.</p>
+<form id="attack-controls" class="attack-controls">
+<div><label for="attack-name">Attack</label><select id="attack-name">
+<option value="random_edit">Random Edit</option><option value="synonym_replace">Local Replacement</option>
+<option value="paraphrase">Paraphrase</option><option value="entropy_rewrite">Entropy Rewrite</option></select></div>
+<div id="budget-control"><label for="attack-budget">Word edit budget</label><select id="attack-budget">
+<option value="0.01">1%</option><option value="0.02">2%</option><option value="0.05" selected>5%</option>
+<option value="0.1">10%</option><option value="0.2">20%</option></select></div>
+<div><label for="attack-seed">Attack seed</label><input id="attack-seed" type="number" value="42" min="0" max="4294967294" required></div>
+<button id="attack-run" type="submit" class="primary" disabled>Transform text ↗</button>
+</form>
+<p id="attack-status" class="status" role="status" aria-live="polite">Generate a watermarked sample first.</p>
+<div id="attack-comparison" hidden>
+<p id="eligibility" class="decision"></p>
+<div id="text-comparison" class="text-comparison"></div>
+<div class="panel-heading"><h3>Text preservation</h3><span>CONTINUOUS QUALITY METRICS</span></div>
+<div id="quality-comparison" class="quality-comparison"></div>
+<p class="note">Semantic similarity is embedding cosine, not factual correctness. Anchor preservation checks numbers, dates, percentages, URLs and emails.</p>
+<div class="evaluator-panel"><div class="panel-heading"><h3>Frozen detector</h3><span>EVALUATOR ONLY</span></div>
+<div id="detector-comparison" class="detector-comparison"></div>
+<p class="note">Detector results are computed after transformation and are never sent to the attack worker. Insufficient evidence is abstention, never evasion.</p></div>
+</div>
+</section>
 <footer>
 <span>NullMark / Visual Playground</span>
-<span>Exploration, not a robustness benchmark. No attack algorithms.</span>
+<span>Local exploration · frozen evaluators · detector-blind transformations.</span>
 </footer>
 </main>
 </div>
