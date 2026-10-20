@@ -1,5 +1,13 @@
 # Local GGUF verification for v0.1.1
 
+The [completed Experiment 002 report](detector-calibration-results.md) contains
+the final 128/100-prompt study, all seven frozen operating points and public
+aggregate evidence. Recommended exploratory Qwen configuration: SynthID depth 20,
+weighted mean, score > **0.5236017624956073**. Held-out TPR **97/98**, observed
+FPR **3/99**, target FPR **1%**, overall abstention **3/200**. The observed rate
+exceeds the target; this is not a validated 1% population-FPR claim. The run took
+114.60 minutes, excluding model loading, without downloading another checkpoint.
+
 The five-prompt observations below are retained as historical diagnostics of
 embedding signal and the old demo thresholds. Experiment 002 adds independent
 clean calibration and held-out evaluation, with upstream weighted mean, depth

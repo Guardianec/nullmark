@@ -75,6 +75,12 @@ for finite-sample ranks, uncertainties, length buckets, native/visible diagnosti
 and the guard future attack-success metrics must call. Historical demo thresholds
 below remain for Experiment 001 reproduction; they are not calibrated decisions.
 
+The [completed Qwen depth study](detector-calibration-results.md) recommends the
+frozen depth-20 weighted statistic as an exploratory practical choice. Its held-out
+TPR is 97/98 and FPR is 3/99 at the threshold selected with a 1% target. None of
+the six SynthID modes achieved an observed FPR at or below 1%; do not interpret
+the target as a validated population rate or retune using this evaluation set.
+
 SynthID generation uses the Google DeepMind/Hugging Face integration. Its
 reference g-values are extracted with the matching secret config; repeated
 contexts and EOS/padding suffixes are masked. We average unmasked g-values across
@@ -130,7 +136,8 @@ These are evaluation requirements for future work, not implemented attack featur
 - The offline model is untrained and cannot establish language quality or research conclusions.
 - GPT-2 is small; its behavior cannot establish generalization to stronger models.
 - The smoke prompt/key counts are too small for reliable rare false-positive estimates.
-- SynthID thresholds need independent empirical calibration; no Bayesian training ships here.
+- SynthID's sparse calibration tail needs larger independent confirmation for strict
+  population FPR claims; no Bayesian training ships here.
 - CPU replay is tested; cross-environment bitwise replay and CUDA behavior are not guaranteed.
 - Parameter randomization is not a cryptographic security proof or production-key inference.
 - Architecture checks are not a sandbox, and filesystem ACLs remain the evaluator's responsibility.

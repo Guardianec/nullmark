@@ -111,6 +111,13 @@ visible-token diagnostics. A 1% target is not a guarantee of 1% population FPR:
 100 clean samples still have substantial tail uncertainty. Small runs are labeled
 exploratory. [Protocol, artifacts and limitations](docs/detector-calibration.md).
 
+The completed local Qwen study used 128 calibration and 100 held-out prompts.
+At a threshold calibrated with a **1% target FPR**, depth-20 SynthID weighted
+mean produced **97/98 TPR (98.98%) and 3/99 observed FPR (3.03%)**, with 3/200
+length abstentions. This is the recommended frozen exploratory configuration;
+it does **not** establish a 1% population FPR. [Measured comparison, uncertainty,
+runtime, length analysis and reusable artifacts](docs/detector-calibration-results.md).
+
 ## Reproducing Experiment 001
 
 ```sh

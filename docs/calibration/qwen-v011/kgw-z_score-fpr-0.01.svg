@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" role="img">
+<title>kgw z_score held-out scores</title>
+<rect width="640" height="280" fill="white"/>
+<text x="40" y="22">Held-out scores: gray clean; green marked; dashed threshold</text>
+<rect x="40" y="188.9655172413793" width="13" height="31.03448275862069" fill="#87968c"/>
+<rect x="68" y="95.86206896551724" width="13" height="124.13793103448276" fill="#87968c"/>
+<rect x="96" y="40.0" width="13" height="180.0" fill="#87968c"/>
+<rect x="124" y="89.65517241379311" width="13" height="130.3448275862069" fill="#87968c"/>
+<rect x="152" y="133.10344827586206" width="13" height="86.89655172413794" fill="#87968c"/>
+<rect x="180" y="157.9310344827586" width="13" height="62.06896551724138" fill="#87968c"/>
+<rect x="208" y="213.79310344827587" width="13" height="6.206896551724138" fill="#87968c"/>
+<rect x="236" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="264" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="292" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="320" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="348" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="376" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="404" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="432" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="460" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="488" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="516" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="544" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="572" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="53" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="81" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="109" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="137" y="213.79310344827587" width="13" height="6.206896551724138" fill="#146957"/>
+<rect x="165" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="193" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="221" y="201.3793103448276" width="13" height="18.620689655172413" fill="#146957"/>
+<rect x="249" y="195.17241379310346" width="13" height="24.82758620689655" fill="#146957"/>
+<rect x="277" y="195.17241379310346" width="13" height="24.82758620689655" fill="#146957"/>
+<rect x="305" y="182.75862068965517" width="13" height="37.241379310344826" fill="#146957"/>
+<rect x="333" y="157.9310344827586" width="13" height="62.06896551724138" fill="#146957"/>
+<rect x="361" y="114.48275862068965" width="13" height="105.51724137931035" fill="#146957"/>
+<rect x="389" y="95.86206896551724" width="13" height="124.13793103448276" fill="#146957"/>
+<rect x="417" y="145.51724137931035" width="13" height="74.48275862068965" fill="#146957"/>
+<rect x="445" y="164.13793103448276" width="13" height="55.86206896551724" fill="#146957"/>
+<rect x="473" y="151.72413793103448" width="13" height="68.27586206896552" fill="#146957"/>
+<rect x="501" y="213.79310344827587" width="13" height="6.206896551724138" fill="#146957"/>
+<rect x="529" y="213.79310344827587" width="13" height="6.206896551724138" fill="#146957"/>
+<rect x="557" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="585" y="213.79310344827587" width="13" height="6.206896551724138" fill="#146957"/>
+<path d="M 215.98190639378905 35 V 225" stroke="#a16c3b" stroke-dasharray="4 4"/>
+<text x="40" y="250">-2.06131</text>
+<text x="520" y="250">10.73633</text>
+</svg>

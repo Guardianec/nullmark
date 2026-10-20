@@ -1,0 +1,40 @@
+calibration_count: 128
+dataset:
+  path: prompts.jsonl
+  sample_count: 240
+  source: jsonl
+depths:
+- 10
+- 20
+- 30
+evaluation_count: 100
+kgw:
+  bias: 2.5
+  context_width: 1
+  greenlist_ratio: 0.25
+  ignore_repeated_ngrams: true
+  threshold: 3.0
+minimum_usable_tokens: 64
+model:
+  backend: ollama-gguf
+  context_length: 2048
+  device: cpu
+  max_new_tokens: 192
+  name: qwen3.5:9b-q4_K_M
+  offload: gpu
+  revision: 02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d
+  temperature: 0.8
+  threads: 8
+  top_k: 40
+  top_p: 0.95
+name: 002_detector_calibration
+seed: 20261020
+synthid:
+  context_history_size: 1024
+  depth: 10
+  ngram_len: 5
+  sampling_table_size: 65536
+  statistic: raw_mean
+  threshold: 0.6
+target_fprs:
+- 0.01

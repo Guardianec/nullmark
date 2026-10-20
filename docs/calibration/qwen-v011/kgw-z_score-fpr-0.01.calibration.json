@@ -1,0 +1,76 @@
+{
+  "scheme": "kgw",
+  "statistic": "z_score",
+  "operating_point": {
+    "target_fpr": 0.01,
+    "number_of_clean_samples": 124,
+    "empirical_threshold": 1.9603921176392136,
+    "observed_calibration_fpr": 0.0,
+    "supported": true,
+    "warnings": [
+      "Fewer than five expected tail samples; operating point has high uncertainty."
+    ],
+    "order_index": 124
+  },
+  "calibration_dataset_hash": "c0023063a868227b3f3c66499701bac7d96a6184e963bc4dc3b6b51a7e998012",
+  "minimum_usable_tokens": 64,
+  "maximum_usable_tokens": 191,
+  "created_at": "2026-10-20T13:47:43.925858+00:00",
+  "calibration_id": "9fdb8b87c828f13930ea8175ec880c013eac6f1738e3055f1dc14bf816f7ca88",
+  "conditions": {
+    "generation": {
+      "backend": "ollama-gguf",
+      "context_length": 2048,
+      "device": "cpu",
+      "max_new_tokens": 192,
+      "name": "qwen3.5:9b-q4_K_M",
+      "offload": "gpu",
+      "revision": "02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d",
+      "temperature": 0.8,
+      "threads": 8,
+      "top_k": 40,
+      "top_p": 0.95
+    },
+    "key_ref": "f8581c930b8d013bf0618850487225af9d7a55299a21a0c636e80d9cee80ac56",
+    "model": {
+      "backend": "llama-cpp-python",
+      "backend_version": "0.3.36",
+      "blob_sha256": "02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d",
+      "chat_template_sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+      "context_length": 2048,
+      "device": "gpu",
+      "gpu_layers": -1,
+      "logits_order": "HF watermark, then native top-k/top-p/temperature sampling",
+      "min_p": 0.0,
+      "name": "qwen3.5:9b-q4_K_M",
+      "ollama_model_digest": "56671c2ab9385f9cfcb404638e32cd62d88e3501d44822208363c010179a3c90",
+      "quantization": "Q4_K_M",
+      "repeat_penalty": 1.0,
+      "revision": "02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d",
+      "sampling": {
+        "temperature": 0.8,
+        "top_k": 40,
+        "top_p": 0.95
+      },
+      "thinking": "enable_thinking=False passed to template",
+      "threads": 8,
+      "trained": true,
+      "vocab_size": 248320,
+      "watermark_device": "cpu"
+    },
+    "nullmark": "0.1.1",
+    "score_input": "retokenized visible continuation; prompt excluded",
+    "watermark": {
+      "bias": 2.5,
+      "context_width": 1,
+      "detector": "transformers.WatermarkDetector",
+      "greenlist_ratio": 0.25,
+      "ignore_repeated_ngrams": true,
+      "implementation": "transformers.WatermarkingConfig",
+      "p_value_assumption": "normal approximation, not empirically calibrated",
+      "scheme": "kgw",
+      "seeding_scheme": "lefthash"
+    }
+  },
+  "version": 1
+}

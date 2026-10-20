@@ -63,7 +63,7 @@ references. A partial prefix crossing is not a calibrated sequential test.
 Load a frozen artifact and its matching private master at server startup:
 
 ```sh
-nullmark playground --calibration results/002-qwen/synthid-d10-weighted_mean-fpr-0.01.calibration.json --secrets results/002-qwen/private/secrets.json
+nullmark playground --calibration docs/calibration/qwen-v011/synthid-d20-weighted_mean-fpr-0.01.calibration.json --secrets results/002-qwen-128/private/secrets.json
 ```
 
 Repeat `--calibration` to offer multiple artifacts in the selector. Set the same
@@ -77,6 +77,15 @@ within its frozen length regime, and pooled FPR does not imply FPR in every buck
 See [the protocol](detector-calibration.md) and the verified score-only view:
 
 ![Named weighted-mean score without binary certainty](images/playground-calibration.png)
+
+The measured Qwen recommendation uses depth 20 and weighted mean with threshold
+0.5236017624956073. The public artifact requires the original matching private
+master; a fresh run creates its own master and artifacts. Its target FPR is 1%,
+but observed held-out FPR was 3/99: see [measured limits and configuration](detector-calibration-results.md).
+The calibrated UI replay showed plain score 0.517 (NOT DETECTED) and marked score
+0.591 (DETECTED), with 74/79 usable tokens. No browser warnings/errors appeared.
+
+![Calibrated Qwen replay with frozen threshold](images/playground-calibrated-qwen.png)
 
 ## Hidden key lifetime
 

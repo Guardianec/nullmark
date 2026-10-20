@@ -1,0 +1,77 @@
+{
+  "scheme": "synthid",
+  "statistic": "weighted_mean",
+  "operating_point": {
+    "target_fpr": 0.01,
+    "number_of_clean_samples": 122,
+    "empirical_threshold": 0.5236017624956073,
+    "observed_calibration_fpr": 0.0,
+    "supported": true,
+    "warnings": [
+      "Fewer than five expected tail samples; operating point has high uncertainty."
+    ],
+    "order_index": 122
+  },
+  "calibration_dataset_hash": "c0023063a868227b3f3c66499701bac7d96a6184e963bc4dc3b6b51a7e998012",
+  "minimum_usable_tokens": 64,
+  "maximum_usable_tokens": 188,
+  "created_at": "2026-10-20T13:47:43.937421+00:00",
+  "calibration_id": "00398a7a59f5d82071135da27bcc6bb9b3d27ae44f9f222fbe0d296909706530",
+  "conditions": {
+    "generation": {
+      "backend": "ollama-gguf",
+      "context_length": 2048,
+      "device": "cpu",
+      "max_new_tokens": 192,
+      "name": "qwen3.5:9b-q4_K_M",
+      "offload": "gpu",
+      "revision": "02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d",
+      "temperature": 0.8,
+      "threads": 8,
+      "top_k": 40,
+      "top_p": 0.95
+    },
+    "key_ref": "e4726d280c08a42b7422004a90504e91ad9c245e211e5668bb85ed0da4a4d013",
+    "model": {
+      "backend": "llama-cpp-python",
+      "backend_version": "0.3.36",
+      "blob_sha256": "02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d",
+      "chat_template_sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715",
+      "context_length": 2048,
+      "device": "gpu",
+      "gpu_layers": -1,
+      "logits_order": "HF watermark, then native top-k/top-p/temperature sampling",
+      "min_p": 0.0,
+      "name": "qwen3.5:9b-q4_K_M",
+      "ollama_model_digest": "56671c2ab9385f9cfcb404638e32cd62d88e3501d44822208363c010179a3c90",
+      "quantization": "Q4_K_M",
+      "repeat_penalty": 1.0,
+      "revision": "02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d",
+      "sampling": {
+        "temperature": 0.8,
+        "top_k": 40,
+        "top_p": 0.95
+      },
+      "thinking": "enable_thinking=False passed to template",
+      "threads": 8,
+      "trained": true,
+      "vocab_size": 248320,
+      "watermark_device": "cpu"
+    },
+    "nullmark": "0.1.1",
+    "score_input": "retokenized visible continuation; prompt excluded",
+    "watermark": {
+      "calibrated": false,
+      "context_history_size": 1024,
+      "depth": 20,
+      "detector": "SynthID weighted mean",
+      "implementation": "transformers.SynthIDTextWatermarkingConfig",
+      "ngram_len": 5,
+      "sampling_table_size": 65536,
+      "scheme": "synthid",
+      "skip_first_ngram_calls": true,
+      "statistic": "weighted_mean"
+    }
+  },
+  "version": 1
+}

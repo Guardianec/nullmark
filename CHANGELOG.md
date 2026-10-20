@@ -14,6 +14,10 @@ Final detector calibration pass:
 - Existing Experiment 001 and v0.1.1 scope retained; no attack implementation.
 - Future evasion eligibility guard rejects originally undetected/abstained samples;
   per-sample held-out decisions retain their frozen calibration identity.
+- Completed local Qwen 128/100-prompt depth study; public aggregate metrics,
+  frozen artifacts, histograms and calibrated Playground replay. Depth-20 weighted
+  mean is the exploratory recommendation (97/98 TPR, 3/99 observed FPR at a 1%
+  target); no SynthID mode establishes the requested population FPR from this run.
 
 Visual Playground (maintenance/usability insertion):
 

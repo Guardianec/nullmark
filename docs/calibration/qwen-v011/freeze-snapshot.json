@@ -1,0 +1,13 @@
+{
+  "observed_at": "2026-10-20T13:47:44.099158+00:00",
+  "heldout_rows_at_snapshot": 0,
+  "sha256": {
+    "kgw-z_score-fpr-0.01.calibration.json": "73cbc4e410c02160281c7fcae681330dcbcfdd5300829fed38c5f52494e309f1",
+    "synthid-d10-raw_mean-fpr-0.01.calibration.json": "f3a8485291cb918e00007489ce02822734bf1ba33cef13c8ef2cadd73c70827e",
+    "synthid-d10-weighted_mean-fpr-0.01.calibration.json": "1690b3ad0b11f20a2f981a4d9b2f4cd8f71b898cf651bf095e19020d250f239e",
+    "synthid-d20-raw_mean-fpr-0.01.calibration.json": "4a4027965839059836f9bfd0d1531b67afc10287c4e3c7d50d063c575bafc28b",
+    "synthid-d20-weighted_mean-fpr-0.01.calibration.json": "61c9cce2f01358ed74d5ea0cfa36d373325872ab7b2b75539053d56dee0b7122",
+    "synthid-d30-raw_mean-fpr-0.01.calibration.json": "0907beb79d004e057769be33ea64572e0fdec215e27d3f3a36ea2fe33e21eebd",
+    "synthid-d30-weighted_mean-fpr-0.01.calibration.json": "ed1b0848241e3698c87050c60470c158277c626beeb6ea2fe292b4e6987e71c8"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "run_source": "Working tree based on d1b4716, later committed as 6adae6eb4bdcef5ae3565dddf4c47593a5f21f95. Original git_dirty provenance is preserved in manifest.json.",
+  "report_source": "3320de444f7d7cd219acd001862e453e0db17703; later guards, report fields and detector-v1 compatibility do not change generation, scoring or thresholds.",
+  "verification": "Completed run; 1140 generations, 3192 score rows. Seven artifact SHA256 values equal the snapshot taken before any held-out score row existed. Final reporting reloaded these artifacts without refitting.",
+  "private_data": "Private master, exact native IDs, raw per-sample diagnostic rows and generated texts remain in ignored local results/002-qwen-128. No private keys are included in this export.",
+  "recommended_artifact": "synthid-d20-weighted_mean-fpr-0.01.calibration.json",
+  "recommendation_status": "Exploratory practical choice; observed held-out FPR exceeds target. Not a validated 1% population-FPR guarantee."
+}

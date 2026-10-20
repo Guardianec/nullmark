@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" role="img">
+<title>synthid weighted_mean held-out scores</title>
+<rect width="640" height="280" fill="white"/>
+<text x="40" y="22">Held-out scores: gray clean; green marked; dashed threshold</text>
+<rect x="40" y="214.0" width="13" height="6.0" fill="#87968c"/>
+<rect x="68" y="214.0" width="13" height="6.0" fill="#87968c"/>
+<rect x="96" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="124" y="184.0" width="13" height="36.0" fill="#87968c"/>
+<rect x="152" y="94.0" width="13" height="126.0" fill="#87968c"/>
+<rect x="180" y="58.0" width="13" height="162.0" fill="#87968c"/>
+<rect x="208" y="106.0" width="13" height="114.0" fill="#87968c"/>
+<rect x="236" y="136.0" width="13" height="84.0" fill="#87968c"/>
+<rect x="264" y="178.0" width="13" height="42.0" fill="#87968c"/>
+<rect x="292" y="208.0" width="13" height="12.0" fill="#87968c"/>
+<rect x="320" y="208.0" width="13" height="12.0" fill="#87968c"/>
+<rect x="348" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="376" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="404" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="432" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="460" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="488" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="516" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="544" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="572" y="220.0" width="13" height="0.0" fill="#87968c"/>
+<rect x="53" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="81" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="109" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="137" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="165" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="193" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="221" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="249" y="214.0" width="13" height="6.0" fill="#146957"/>
+<rect x="277" y="220.0" width="13" height="0.0" fill="#146957"/>
+<rect x="305" y="196.0" width="13" height="24.0" fill="#146957"/>
+<rect x="333" y="184.0" width="13" height="36.0" fill="#146957"/>
+<rect x="361" y="196.0" width="13" height="24.0" fill="#146957"/>
+<rect x="389" y="166.0" width="13" height="54.0" fill="#146957"/>
+<rect x="417" y="190.0" width="13" height="30.0" fill="#146957"/>
+<rect x="445" y="40.0" width="13" height="180.0" fill="#146957"/>
+<rect x="473" y="100.0" width="13" height="120.0" fill="#146957"/>
+<rect x="501" y="148.0" width="13" height="72.0" fill="#146957"/>
+<rect x="529" y="208.0" width="13" height="12.0" fill="#146957"/>
+<rect x="557" y="196.0" width="13" height="24.0" fill="#146957"/>
+<rect x="585" y="202.0" width="13" height="18.0" fill="#146957"/>
+<path d="M 300.0295299811337 35 V 225" stroke="#a16c3b" stroke-dasharray="4 4"/>
+<text x="40" y="250">0.44656</text>
+<text x="520" y="250">0.63058</text>
+</svg>

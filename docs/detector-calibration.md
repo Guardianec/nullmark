@@ -187,6 +187,6 @@ that rate directly with a calibrated rate without checking length eligibility.
 
 Inspect the continuation samples manually for coherence, factual problems,
 repetition and truncation. This release introduces no semantic-quality model.
-See [the local validation report](local-model-verification.md) for measured Qwen
+See [the completed calibration study](detector-calibration-results.md) for measured Qwen
 results and the practical configuration recommendation. v0.2 attack implementation
 has NOT started.

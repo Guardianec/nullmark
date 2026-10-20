@@ -2,8 +2,8 @@
 
 ## Final detector calibration protocol
 
-- Implementation commit `6adae6eb4bdcef5ae3565dddf4c47593a5f21f95` passed
-  [GitHub CI](https://github.com/Guardianec/nullmark/actions/runs/39424691204)
+- Implementation commit `3320de444f7d7cd219acd001862e453e0db17703` passed
+  [GitHub CI](https://github.com/Guardianec/nullmark/actions/runs/39427720808)
   and the paired pull-request workflow run.
 - Local full suite: **146 passed, 1 skipped**. Ruff lint/format passed. The
   default skip remains the opt-in pinned GPT-2 integration test.
@@ -25,6 +25,18 @@
 - Browser verification exercised the named weighted-mean mode, token inspection,
   selected-statistic trace, visible/usable counts and score-only presentation.
   [Screenshot](images/playground-calibration.png).
+- Actual local Qwen study completed: **128 calibration / 100 evaluation prompts**,
+  **1,140 generations / 3,192 score rows**, 114.60 minutes excluding model loading.
+  All seven frozen artifact hashes match the snapshot taken before held-out scoring.
+  Public aggregate metrics, provenance, split IDs/prompts, artifacts and histograms
+  are linked from the [measured report](detector-calibration-results.md).
+- Depth-20 weighted mean is the frozen exploratory recommendation: **97/98 TPR,
+  3/99 observed FPR**, 1% target, 3/200 length abstentions. No SynthID mode achieved
+  observed FPR ≤1%; sparse-tail and mode-selection uncertainty are documented.
+- Browser verification with the actual matching artifact/private master replayed a
+  held-out narrative seed and produced plain NOT DETECTED / marked DETECTED, with
+  the weighted trace and calibrated threshold. No browser errors or warnings.
+  [Calibrated screenshot](images/playground-calibrated-qwen.png).
 
 The [calibration protocol](detector-calibration.md) documents statistical support
 and limitations separately from software checks. Historical five-prompt evidence
@@ -148,8 +160,11 @@ PyTorch 2.6.0+cpu and Transformers 4.57.6. No GPU or commercial API was used.
 
 The desktop sandbox required placing temporary build/test directories inside the
 workspace. This changes neither package behavior nor CI's normal temporary paths.
-The local Headroom service was unavailable; verification used targeted reads and
-short logs.
+For the original release checks, the local Headroom service was unavailable;
+verification used targeted reads and short logs. During the final calibration
+review, on-demand compression worked and exact originals were retrieved before
+numerical conclusions (hash `7aa533119097740a537dc36a`); its optional proxy reported
+unreachable. This does not imply that all Codex traffic is compressed.
 
 ## Observed pretrained GPT-2 smoke run
 
@@ -191,9 +206,10 @@ tests software behavior and cannot support language-quality or research conclusi
 
 ## Release limits
 
-No calibrated SynthID Bayesian detector, process sandbox, cross-hardware replay
-guarantee, static plots, dashboard or attack algorithm is included. Detector
-threshold calibration and larger, independently split datasets are required for
-future research claims. Windows private-file protection depends on workspace ACLs.
+No trained SynthID Bayesian detector, process sandbox, cross-hardware replay
+guarantee, dashboard or attack algorithm is included. Empirical raw/weighted
+calibration and static histograms are included. Larger independent confirmation
+is required for strict population-FPR claims; the completed SynthID study exceeds
+its 1% target on held-out data. Windows private-file protection depends on workspace ACLs.
 
 No v0.2 feature was implemented. The next milestone is **v0.2 — Baseline Attacks**.
