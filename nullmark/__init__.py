@@ -1,3 +1,3 @@
-"""NullMark v0.1: reproducibility before adversarial research."""
+"""NullMark: controlled watermark robustness and text-preservation experiments."""
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"

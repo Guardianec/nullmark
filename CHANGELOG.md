@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0 — Baseline Attacks
+
+- Four keyless, detector-blind baseline families: Random Edit, contextual Local
+  Replacement, one-pass Paraphrase and ordinary-entropy Rewrite. No SKD features.
+- Subprocess worker with text-only inputs, explicit provenance, validated outputs,
+  clean cwd/environment, AST import guards and content-addressed public caches.
+- Fresh 240-prompt corpus in eight styles, disjoint from calibration. Experiment
+  003 reuses frozen v0.1.1 KGW and SynthID depth-20 weighted evaluators unchanged.
+- Eligibility, completion, evasion, failure and abstention accounting; exact edit,
+  pinned local semantic similarity and anchor metrics; distributions, descriptive
+  quality-conditioned evasion, Pareto CSV and static plots.
+- Playground attack selector and synchronized original/diff/attacked text panels,
+  continuous quality metrics and separately labeled evaluator-only detector results.
+- CPU/offline smoke fixtures and documentation for local Qwen benchmarking,
+  scientific isolation, semantic limitations and reproducibility.
+
 ## 0.1.1 — 2026-10-20
 
 Final detector calibration pass:

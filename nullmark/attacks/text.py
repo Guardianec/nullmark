@@ -38,7 +38,8 @@ def candidates(text):
     return [
         m
         for m in WORD.finditer(text)
-        if len(m.group()) > 3 and m.group().isalpha()
+        if len(m.group()) > 3
+        and m.group().isalpha()
         and m.group().islower()
         and not any(m.start() < end and m.end() > start for start, end in protected)
     ]

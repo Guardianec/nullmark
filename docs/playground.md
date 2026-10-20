@@ -282,3 +282,25 @@ Expand **Exact decoded text** for uninterrupted prose alongside token fragments.
 The CLI remains the authoritative experiment/replay interface. See the
 [verification record](release-verification.md) for actual Qwen/GPT-2 results and
 limitations, including marked outputs below the original uncalibrated thresholds.
+
+
+## Baseline attack comparison (v0.2)
+
+After generating a watermarked continuation, choose Random Edit, Local Replacement,
+Paraphrase or Entropy Rewrite in **Baseline attacks**. Sparse budgets are upper bounds;
+Paraphrase reports measured edits. The latter three use the installed local Qwen
+model. Each transformation runs in the independent text-only worker; detector
+information visible in this trusted interface is never passed back to that worker.
+
+The three synchronized panels show the original, accessible deletion/insertion diff
+(strike/underline plus −/+ signs), and attacked prose. Text preservation reports real
+semantic similarity (or explicit Unavailable), word/token edit fractions, length ratio,
+lexical similarity and retained anchors. Embeddings do not prove factual correctness.
+The separate **Evaluator only** panel displays scores, thresholds and detector states.
+An originally missed or abstained sample is explicitly ineligible for evasion claims.
+Changing the hidden key requires a new generation before attacking.
+
+Generation resources are released before transformation to avoid holding two GGUF
+runtimes on the GPU. The backend is reloaded for trusted post-attack quality/detection.
+Model loading can therefore dominate an interactive attack's elapsed time.
+See [methodology](baseline-attacks.md) for process-isolation limits and cache setup.

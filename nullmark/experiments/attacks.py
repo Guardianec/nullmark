@@ -147,6 +147,8 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
         r["sample_id"]: AttackInput(**r) for r in read_jsonl(output / "source_samples.jsonl")
     }
     eligible = [r for r in baselines if r["before"]["state"] == "DETECTED"]
+    if stage in ("all", "attack", "evaluate") and len(baselines) != len(prompts) * 2:
+        raise ValueError("complete baseline generation before attack/evaluation")
     if stage in ("all", "attack"):
         local = resolve_model(config.model.name, expected_digest=config.model.revision)
         public_model = {
@@ -178,6 +180,19 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
                     print(f"attack {attack} {sample.sample_id}", flush=True)
 
     if stage in ("all", "evaluate"):
+        expected_ids = {r["sample_id"] for r in eligible}
+        for attack in NAMES:
+            rows = read_jsonl(output / "attacks" / f"{attack}.jsonl")
+            expected = {
+                (sample_id, budget)
+                for sample_id in expected_ids
+                for budget in ((None,) if attack == "paraphrase" else BUDGETS)
+            }
+            actual = {(r["sample_id"], r["budget"]) for r in rows}
+            if actual != expected or len(rows) != len(expected):
+                raise ValueError(
+                    "incomplete or duplicate attack attempts; resume attack stage first"
+                )
         semantic = SemanticSimilarity() if config.semantic else None
         model = load_model(config.model)
         try:
@@ -229,6 +244,11 @@ def run_benchmark(config_path, *, output, secrets_path, stage="all", resume=Fals
         metrics = aggregate(baselines, read_jsonl(output / "evaluation.jsonl"))
         write_json(output / "metrics.json", metrics)
         report(output, metrics)
+        manifest = json.loads((output / "manifest.json").read_text("utf-8"))
+        manifest["stage"] = "complete"
+        manifest["expected_attempts"] = len(eligible) * 16
+        manifest["evaluated_attempts"] = len(read_jsonl(output / "evaluation.jsonl"))
+        write_json(output / "manifest.json", manifest)
     # Frozen evaluator files must remain byte-for-byte unchanged.
     assert frozen_hashes == {
         s: hashlib.sha256((base / p).read_bytes()).hexdigest()

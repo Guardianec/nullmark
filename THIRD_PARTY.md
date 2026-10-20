@@ -18,6 +18,9 @@ it does not vendor their processor or detector source files.
 | llama-cpp-python / llama.cpp | https://github.com/abetlen/llama-cpp-python | MIT; optional direct GGUF inference, native sampler and chat formatting |
 | Ollama | https://github.com/ollama/ollama | MIT; separately installed local model discovery; no inference API generation |
 | Uvicorn | https://github.com/encode/uvicorn | BSD-3-Clause; optional local ASGI serving |
+| Sentence Transformers | https://github.com/UKPLab/sentence-transformers | Apache-2.0; optional local semantic evaluation |
+| all-MiniLM-L6-v2 | https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2 | Apache-2.0; pinned embedding weights downloaded separately, never redistributed |
+| Matplotlib | https://matplotlib.org | Matplotlib license (PSF-derived); optional static research plots |
 
 Copyright in Transformers' watermarking modules belongs to their upstream
 contributors, including Hugging Face and Google DeepMind; the original KGW authors
