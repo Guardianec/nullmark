@@ -8,6 +8,7 @@ def cli(*args):
         [sys.executable, "-m", "nullmark", *map(str, args)],
         capture_output=True,
         text=True,
+        encoding="utf-8",
     )
 
 
@@ -16,6 +17,15 @@ def test_cli_help_and_version():
     assert "0.1.0" in cli("--version").stdout
     assert cli("experiment", "run", "--help").returncode == 0
     assert cli("detect", "--help").returncode == 0
+
+
+def test_malformed_yaml_is_reported_without_input_values(tmp_path):
+    config = tmp_path / "malformed.yaml"
+    config.write_text("seed: [private-input-marker\n")
+    failed = cli("generate", "--config", config, "--scheme", "none", "--prompt", "Hello")
+    assert failed.returncode == 2
+    assert "private-input-marker" not in failed.stdout + failed.stderr
+    assert "Traceback" not in failed.stderr
 
 
 def test_cli_commands_and_errors(tmp_path):

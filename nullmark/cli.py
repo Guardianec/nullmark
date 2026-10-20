@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from pydantic import ValidationError
+from yaml import YAMLError
 
 from nullmark import __version__
 from nullmark.config import load_config
@@ -106,6 +107,9 @@ def execute(args) -> int:
 
 
 def main() -> None:
+    # Redirected artifacts must remain UTF-8 on Windows as well as Unix.
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     args = parser().parse_args()
     try:
         code = execute(args)
@@ -119,7 +123,7 @@ def main() -> None:
         ]
         print(f"nullmark: invalid configuration at {', '.join(locations)}", file=sys.stderr)
         code = 2
-    except (OSError, ValueError, RuntimeError, KeyError) as exc:
+    except (OSError, ValueError, RuntimeError, KeyError, YAMLError) as exc:
         # Upstream exceptions may embed private config. Keep terminal errors non-secret.
         message = str(exc) if isinstance(exc, FileExistsError) else type(exc).__name__
         print(
