@@ -232,21 +232,39 @@
 <form id="attack-controls" class="attack-controls">
 <div><label for="attack-name">Attack</label><select id="attack-name">
 <option value="random_edit">Random Edit</option><option value="synonym_replace">Local Replacement</option>
-<option value="paraphrase">Paraphrase</option><option value="entropy_rewrite">Entropy Rewrite</option></select></div>
+<option value="paraphrase">Paraphrase</option><option value="entropy_rewrite">Entropy Rewrite</option>
+<option value="skd">SKD — Sparse Keyless Disruption</option></select></div>
 <div id="budget-control"><label for="attack-budget">Word edit budget</label><select id="attack-budget">
 <option value="0.01">1%</option><option value="0.02">2%</option><option value="0.05" selected>5%</option>
 <option value="0.1">10%</option><option value="0.2">20%</option></select></div>
+<div id="skd-edit-control" hidden><label for="skd-edits">Requested edits</label><select id="skd-edits">
+<option value="1">1 edit</option><option value="2">2 edits</option><option value="3" selected>3 edits</option><option value="5">5 edits</option></select></div>
 <div><label for="attack-seed">Attack seed</label><input id="attack-seed" type="number" value="42" min="0" max="4294967294" required></div>
 <button id="attack-run" type="submit" class="primary" disabled>Transform text ↗</button>
 </form>
+<details id="skd-research" hidden><summary>Research selection</summary>
+<label for="skd-selection">Selection from the same candidate pool</label><select id="skd-selection">
+<option value="skd">Full SKD</option><option value="random_pool">Random pool</option>
+<option value="entropy_only">Entropy</option><option value="context_only">Context</option>
+<option value="tokenizer_only">Tokenizer</option></select></details>
 <p id="attack-status" class="status" role="status" aria-live="polite">Generate a watermarked sample first.</p>
 <div id="attack-comparison" hidden>
 <p id="eligibility" class="decision"></p>
+<section id="skd-inspector" hidden aria-label="SKD candidate inspector">
+<div class="panel-heading"><h3>Candidate inspector</h3><span>DETECTOR-BLIND RANKING</span></div>
+<p id="skd-coverage" class="note"></p>
+<div id="skd-source" class="skd-source" aria-label="Source text with candidate spans"></div>
+<label for="skd-candidate">Inspect candidate</label><select id="skd-candidate"></select>
+<div id="skd-candidate-detail" aria-live="polite"></div>
+<ol id="skd-selected-edits" class="skd-selected-edits" aria-label="Selected edits"></ol>
+<p class="note">SKD ranking is detector-blind. Scores use ordinary model uncertainty, generic context impact, tokenizer behavior, linguistic replaceability and semantic risk. No detector score or watermark key is used.</p>
+</section>
 <div id="text-comparison" class="text-comparison"></div>
 <div class="panel-heading"><h3>Text preservation</h3><span>CONTINUOUS QUALITY METRICS</span></div>
 <div id="quality-comparison" class="quality-comparison"></div>
 <p class="note">Semantic similarity is embedding cosine, not factual correctness. Anchor preservation checks numbers, dates, percentages, URLs and emails.</p>
 <div class="evaluator-panel"><div class="panel-heading"><h3>Frozen detector</h3><span>EVALUATOR ONLY</span></div>
+<p class="note">Evaluator result — not available to SKD</p>
 <div id="detector-comparison" class="detector-comparison"></div>
 <p class="note">Detector results are computed after transformation and are never sent to the attack worker. Insufficient evidence is abstention, never evasion.</p></div>
 </div>

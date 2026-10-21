@@ -916,3 +916,30 @@ footer {
 .inference-options summary {
   cursor: pointer
 }
+
+.skd-source {
+  font: 16px/1.9 Georgia, serif;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 16px;
+  border: 1px solid var(--line);
+  margin: 12px 0
+}
+.skd-span {
+  display: inline;
+  font: inherit;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px dotted #568983;
+  background: #e6efeb;
+  color: inherit;
+  cursor: pointer
+}
+.skd-span.selected { background: #cee8b4; border-bottom: 2px solid #587b30 }
+.skd-span:focus-visible { outline: 2px solid #305b9b; outline-offset: 2px }
+.skd-replacement { font: 18px/1.5 Georgia, serif; overflow-wrap: anywhere }
+.skd-selected-edits { padding-left: 24px; line-height: 1.8 }
+#skd-candidate { max-width: 100%; width: 100%; margin-bottom: 12px }
+#skd-research { margin: 12px 0; font-size: 12px }
+#skd-research summary { cursor: pointer; margin-bottom: 8px }
+#skd-candidate-detail small { display: block; color: var(--muted) }

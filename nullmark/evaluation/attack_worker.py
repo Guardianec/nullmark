@@ -11,6 +11,8 @@ from pathlib import Path
 
 from nullmark.attacks.base import AttackOutput
 from nullmark.attacks.baselines import TEMPLATE, VERSION, validate_output
+from nullmark.attacks.skd import METHODS, SKDOutput, settings
+from nullmark.attacks.skd import VERSION as SKD_VERSION
 from nullmark.evaluation.records import export_sample
 
 
@@ -21,7 +23,11 @@ def cache_identity(request):
         value["model"].pop("model_path", None)
     return hashlib.sha256(
         json.dumps(
-            {"request": value, "version": VERSION, "template": TEMPLATE},
+            {
+                "request": value,
+                "version": SKD_VERSION if value["attack"] in METHODS else VERSION,
+                "template": SKD_VERSION if value["attack"] in METHODS else TEMPLATE,
+            },
             sort_keys=True,
             allow_nan=False,
         ).encode()
@@ -80,7 +86,7 @@ class AttackWorker:
             encoding="utf-8",
         )
 
-    def transform(self, sample, *, attack, budget, seed):
+    def transform(self, sample, *, attack, budget, seed, skd=None):
         request = {
             "sample": export_sample(sample),
             "attack": attack,
@@ -88,6 +94,9 @@ class AttackWorker:
             "seed": seed,
             "model": self.model if attack != "random_edit" else None,
         }
+        output_type = SKDOutput if attack in METHODS else AttackOutput
+        if attack in METHODS:
+            request["skd"] = settings(skd)
         identity = cache_identity(request)
         path = self.cache / f"{identity}.json" if self.cache else None
         if path and path.exists():
@@ -97,7 +106,7 @@ class AttackWorker:
             serialized = json.dumps(stored["output"], sort_keys=True, allow_nan=False).encode()
             if hashlib.sha256(serialized).hexdigest() != stored["output_sha256"]:
                 raise ValueError("attack cache content mismatch")
-            result = AttackOutput(**stored["output"])
+            result = output_type(**stored["output"])
             validate_output(sample.text, result.text, sample.prompt)
             return result
         if self.process is not None and self.process.poll() is not None:
@@ -118,7 +127,7 @@ class AttackWorker:
         response = json.loads(line)
         if "failure" in response:
             raise RuntimeError("attack transformation failed: " + response["failure"])
-        result = AttackOutput(**response["output"])
+        result = output_type(**response["output"])
         validate_output(sample.text, result.text, sample.prompt)
         if path:
             path.parent.mkdir(parents=True, exist_ok=True)

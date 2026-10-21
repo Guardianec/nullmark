@@ -25,8 +25,12 @@ GPT2_REVISION = "607a30d783dfa663caf39e06633721c8d4cfcd7e"
 
 class AttackSettings(StrictConfig):
     generation_id: str = Field(pattern=r"^[0-9a-f]{32}$")
-    attack: Literal["random_edit", "synonym_replace", "paraphrase", "entropy_rewrite"]
+    attack: Literal["random_edit", "synonym_replace", "paraphrase", "entropy_rewrite", "skd"]
     budget: float | None = Field(None, gt=0, le=0.2)
+    edits: Literal[1, 2, 3, 5] = 3
+    selection: Literal["skd", "random_pool", "entropy_only", "context_only", "tokenizer_only"] = (
+        "skd"
+    )
     seed: int = Field(42, ge=0, lt=2**32 - 1)
 
 
@@ -183,7 +187,7 @@ class Playground:
             raise ValueError("Generate a sample before attacking it")
         if original["scheme"] == "none":
             raise ValueError("Select a watermark scheme before attacking")
-        if settings.attack != "paraphrase" and settings.budget is None:
+        if settings.attack not in ("paraphrase", "skd") and settings.budget is None:
             raise ValueError("Sparse attacks require an edit budget")
         public_model = None
         if settings.attack != "random_edit":
@@ -193,6 +197,10 @@ class Playground:
                 "model_digest": local.blob_sha256,
                 "offload": self.last_settings.offload,
             }
+            if settings.attack == "skd":
+                public_model.update(
+                    skd_mode=True, semantic_cache=str(Path(".cache/huggingface/hub").resolve())
+                )
         # Release GPU generation resources before the independent attack runtime.
         for model in self._models.values():
             model.close()
@@ -202,7 +210,10 @@ class Playground:
         )
         with AttackWorker(model=public_model, cache=Path(".cache/playground-attacks")) as worker:
             attacked = worker.transform(
-                sample, attack=settings.attack, budget=settings.budget, seed=settings.seed
+                sample,
+                attack=settings.selection if settings.attack == "skd" else settings.attack,
+                budget=settings.edits if settings.attack == "skd" else settings.budget,
+                seed=settings.seed,
             )
         model = load_model(self.last_model_config)
         try:

@@ -19,21 +19,22 @@ class TransformationModel:
             if hashlib.file_digest(handle, "sha256").hexdigest() != self.digest:
                 raise ValueError("attack model digest mismatch")
         api = llama_module()
+        context_length = 8192 if config.get("skd_mode") else 4096
         self.sampling = {
             "temperature": 0.2,
             "top_k": 40,
             "top_p": 0.95,
-            "max_tokens": 768,
+            "max_tokens": 1536 if config.get("skd_mode") else 768,
             "enable_thinking": False,
             "repeat_penalty": 1.0,
             "min_p": 0.0,
             "backend_version": api.__version__,
-            "context_length": 4096,
+            "context_length": context_length,
             "chat_template_sha256": None,
         }
         self.llm = api.Llama(
             model_path=str(path),
-            n_ctx=4096,
+            n_ctx=context_length,
             n_batch=256,
             n_threads=8,
             n_gpu_layers=gpu_layers(
@@ -59,7 +60,10 @@ class TransformationModel:
         prompt = self.formatter(
             messages=[{"role": "user", "content": instruction}], enable_thinking=False
         ).prompt
-        if len(self.tokenize(prompt)) + self.sampling["max_tokens"] > 4096:
+        if (
+            len(self.tokenize(prompt)) + self.sampling["max_tokens"]
+            > self.sampling["context_length"]
+        ):
             raise ValueError("attack prompt exceeds context")
         response = self.llm.create_completion(
             prompt=prompt,
@@ -145,3 +149,35 @@ class TransformationModel:
 
     def close(self):
         self.llm.close()
+
+    def skd_entropies(self, text, pool):
+        """Mean ordinary next-token entropy across source span token positions."""
+        ids = self.tokenize(text)
+        if len(ids) >= self.sampling["context_length"]:
+            raise ValueError("SKD entropy text exceeds context")
+        self.llm.reset()
+        self.llm.eval(ids)
+        # Prefix byte lengths preserve multibyte character alignment at span boundaries.
+        ends = [len(self.llm.detokenize(ids[:i])) for i in range(1, len(ids) + 1)]
+        starts = [0, *ends[:-1]]
+        needed = set()
+        indices = {}
+        for c in pool:
+            left, right = len(text[: c["start"]].encode()), len(text[: c["end"]].encode())
+            indices[(c["start"], c["end"])] = [
+                i - 1
+                for i, (a, b) in enumerate(zip(starts, ends, strict=True))
+                if a < right and b > left and i > 0
+            ]
+            needed.update(indices[(c["start"], c["end"])])
+        entropies = {}
+        for i in needed:
+            logits = np.array(self.llm.scores[i], dtype=np.float64)
+            logits -= logits.max()
+            p = np.exp(logits)
+            p /= p.sum()
+            entropies[i] = float(-np.sum(p * np.log(np.maximum(p, np.finfo(float).tiny))))
+        return {
+            start: float(np.mean([entropies[i] for i in positions])) if positions else 0.0
+            for start, positions in indices.items()
+        }

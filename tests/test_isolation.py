@@ -37,7 +37,9 @@ def test_attacks_cannot_import_evaluator_or_dynamic_import_tools():
         "nullmark.attacks.text",
         "nullmark.attacks.baselines",
         "nullmark.attacks.model",
+        "nullmark.attacks.skd",
         "nullmark.common.runtime",
+        "nullmark.common.semantic",
     }
     for path in Path("nullmark/attacks").rglob("*.py"):
         tree = ast.parse(path.read_text("utf-8"))

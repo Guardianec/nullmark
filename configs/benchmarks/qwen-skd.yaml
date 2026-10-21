@@ -1,0 +1,53 @@
+attack_offload: gpu
+baseline_prompts: attacks-v1.jsonl
+calibration_prompts: ../calibration/prompts-v1.jsonl
+calibrations:
+  kgw: ../../docs/calibration/qwen-v011/kgw-z_score-fpr-0.01.calibration.json
+  synthid: ../../docs/calibration/qwen-v011/synthid-d20-weighted_mean-fpr-0.01.calibration.json
+dataset:
+  path: skd-v1.jsonl
+  sample_count: 240
+  source: jsonl
+development_prompts: skd-dev-v1.jsonl
+kgw:
+  bias: 2.5
+  context_width: 1
+  greenlist_ratio: 0.25
+  ignore_repeated_ngrams: true
+  threshold: 3.0
+model:
+  backend: ollama-gguf
+  context_length: 2048
+  device: cpu
+  max_new_tokens: 192
+  name: qwen3.5:9b-q4_K_M
+  offload: gpu
+  revision: 02d45dc1cf451ba2475ac33b301c2dd8f985abe4c182ce04a1f2f5bf0260278d
+  temperature: 0.8
+  threads: 8
+  top_k: 40
+  top_p: 0.95
+name: 004-skd
+seed: 20261023
+semantic: true
+skd:
+  boundary_words: 4
+  context_leverage_horizon: 8
+  local_similarity_min: 0.85
+  max_replacement_words: 6
+  max_source_words: 4
+  proposal_batches: 3
+  proposals_per_batch: 12
+  weights:
+    D: -1.5
+    E: 1.0
+    L: 1.25
+    R: 1.0
+    T: 1.0
+synthid:
+  context_history_size: 1024
+  depth: 20
+  ngram_len: 5
+  sampling_table_size: 65536
+  statistic: weighted_mean
+  threshold: 0.6
