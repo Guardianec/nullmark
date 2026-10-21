@@ -20,6 +20,7 @@ from nullmark.attacks.skd import (
     local_pair,
     normalize,
     parse_proposals,
+    proposal_spans,
     select,
     settings,
     transform,
@@ -48,7 +49,18 @@ class Model:
 
     def complete(self, instruction, seed):
         self.calls += 1
-        return json.dumps([proposal(), proposal("method", "approach"), proposal()])
+        rows = []
+        for span in self.spans:
+            replacement = {"useful": "helpful", "method": "approach"}.get(span["original"])
+            if replacement:
+                rows.append(dict(span_id=span["span_id"], replacement=replacement))
+                if span["original"] == "useful":
+                    rows.append(rows[-1])
+        return json.dumps(rows)
+
+    def propose(self, instruction, seed, *, spans, max_candidates):
+        self.spans = spans
+        return self.complete(instruction, seed)
 
     def skd_entropies(self, text, pool):
         return {(c["start"], c["end"]): c["start"] / 100 for c in pool}
@@ -121,9 +133,10 @@ def test_strict_json(raw):
 
 def test_pool_dedup_features_and_coverage():
     artifact = pool()
-    assert artifact["coverage"] == dict(
-        source_words=10, proposed=9, proposed_spans=9, valid=9, safe=9, unique=2, selectable=2
-    )
+    assert artifact["coverage"]["source_words"] == 10
+    assert artifact["coverage"]["unique"] == artifact["coverage"]["selectable"] == 2
+    assert artifact["coverage"]["proposed"] == artifact["coverage"]["valid"] == 3
+    assert artifact["coverage"]["safe"] == 3
     assert all(set(FEATURES) <= c.keys() for c in artifact["candidates"])
     c = artifact["candidates"][0]
     assert c["R"] == 0.5 and c["D"] == pytest.approx(0.03)
@@ -188,6 +201,47 @@ def test_ordinary_entropy_span_aggregation():
     entropy = model.skd_entropies("abc", [{"start": 1, "end": 2}, {"start": 1, "end": 3}])
     assert entropy[(1, 2)] == pytest.approx(np.log(2))
     assert entropy[(1, 3)] == pytest.approx(np.log(2) / 2)
+
+
+def test_proposal_grammar_enforces_bounded_array_and_records_schema(monkeypatch):
+    from nullmark.attacks import model as module
+
+    seen = {}
+
+    def grammar(schema, **kwargs):
+        seen.update(schema=json.loads(schema), **kwargs)
+        return "grammar fixture"
+
+    monkeypatch.setattr(
+        module,
+        "llama_module",
+        lambda: SimpleNamespace(LlamaGrammar=SimpleNamespace(from_json_schema=grammar)),
+    )
+    model = TransformationModel.__new__(TransformationModel)
+    model.sampling = {}
+    model.complete = lambda instruction, seed, **kwargs: seen.update(kwargs) or "[]"
+    assert model.propose("instruction", 7, spans=[dict(span_id=3)], max_candidates=12) == "[]"
+    assert seen["schema"]["maxItems"] == 12
+    assert seen["schema"]["items"]["additionalProperties"] is False
+    assert seen["schema"]["items"]["properties"]["span_id"]["enum"] == [3]
+    assert seen["grammar"] == "grammar fixture"
+    assert len(model.sampling["proposal_schema_sha256"]) == 64
+
+
+def test_target_spans_are_deterministic_local_and_source_validated():
+    spans = proposal_spans(TEXT, settings(), 7)
+    assert spans == proposal_spans(TEXT, settings(), 7)
+    assert len(spans) <= 36
+    assert len({s["span_id"] for s in spans}) == len(spans)
+    assert any(len(s["original"].split()) > 1 for s in spans)
+    for s in spans:
+        assert TEXT[s["start"] : s["end"]] == s["original"]
+        assert "The" not in s["original"]
+    model = Model()
+    model.complete = lambda *a: '[{"span_id":-1,"replacement":"helpful"}]'
+    result = generate_pool(AttackInput("x", "p", TEXT), model, None, settings(), 7)
+    assert result["coverage"]["valid"] == 0
+    assert result["rejections"]["invalid_unsafe_or_duplicate"] > 0
 
 
 def test_normalization_ties_weights_and_missing():

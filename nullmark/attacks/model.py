@@ -1,6 +1,7 @@
 """Unwatermarked GGUF transformation-only wrapper. Never constructs a detector."""
 
 import hashlib
+import json
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -56,7 +57,7 @@ class TransformationModel:
     def tokenize(self, text):
         return self.llm.tokenize(text.encode(), add_bos=False, special=False)
 
-    def complete(self, instruction, seed):
+    def complete(self, instruction, seed, *, grammar=None):
         prompt = self.formatter(
             messages=[{"role": "user", "content": instruction}], enable_thinking=False
         ).prompt
@@ -74,10 +75,31 @@ class TransformationModel:
             max_tokens=self.sampling["max_tokens"],
             repeat_penalty=1.0,
             min_p=0.0,
+            **({"grammar": grammar} if grammar is not None else {}),
         )
         if response["choices"][0]["finish_reason"] == "length":
             raise ValueError("truncated model output")
         return response["choices"][0]["text"]
+
+    def propose(self, instruction, seed, *, spans, max_candidates):
+        """Enforce the promised bounded JSON format without any outcome feedback."""
+        schema = {
+            "type": "array",
+            "maxItems": max_candidates,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["span_id", "replacement"],
+                "properties": {
+                    "span_id": {"type": "integer", "enum": [s["span_id"] for s in spans]},
+                    "replacement": {"type": "string", "minLength": 1, "maxLength": 120},
+                },
+            },
+        }
+        serialized = json.dumps(schema)
+        grammar = llama_module().LlamaGrammar.from_json_schema(serialized, verbose=False)
+        self.sampling["proposal_schema_sha256"] = hashlib.sha256(serialized.encode()).hexdigest()
+        return self.complete(instruction, seed, grammar=grammar)
 
     def paraphrase(self, text, seed):
         return self.complete(

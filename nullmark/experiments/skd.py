@@ -186,6 +186,7 @@ def run_skd(config_path, *, output, secrets_path, design_commit, stage="all", re
                                             "coverage",
                                             "rejections",
                                             "generation_seconds",
+                                            "generation_metadata",
                                             "config",
                                             "version",
                                         )

@@ -14,10 +14,18 @@ sandbox against malicious code. AST import guards cover all attack modules.
 ## Candidate generation and validation
 
 The installed `qwen3.5:9b-q4_K_M` is asked for three independent batches of up to 12
-localized edits, using a strict JSON array with character start/end, original and
-replacement. The source word offsets are supplied explicitly. No dictionary is
+localized edits. Enumerate valid 1–4 word source spans using the structural anchor
+filters, shuffle with the public sample seed, and target at most 36 distinct spans
+in three disjoint batches of 12. Each target has canonical character offsets,
+original text and an integer span ID. Qwen returns only span ID and replacement;
+it never calculates source offsets. Validate the canonical span against actual
+source text again before accepting the replacement. No synonym dictionary is
 used. Each batch uses seed + batch index, temperature .2, top-k 40, top-p .95,
-1536 output tokens, no thinking, context 8192. Offsets must match source text
+1536 output tokens, no thinking, context 8192. A bounded JSON-schema grammar
+enforces an array of at most 12 objects with exactly span ID and replacement.
+The ID is an enum of that batch's public targets; replacements are bounded to
+120 characters. The schema hash is saved in sampling
+metadata. Offsets must match source text
 exactly; malformed batches are rejected without repair or outcome-driven retry.
 
 Source spans contain 1–4 lowercase words; replacements contain 1–6 and at most
@@ -28,7 +36,14 @@ content. Logical conjunctions/scope words are protected; isolated function words
 short words and partial hyphen/apostrophe compounds are rejected. The development
 inspection exposed an `or` → `and` proposal and partial `high-speed` proposals;
 these structural filters were added before any benchmark detector outcomes.
-Actual proposal counts are recorded even when Qwen exceeds the requested count.
+Actual proposal counts are recorded. A protocol-v1 attempt only requested this
+format and let Qwen calculate offsets; it rejected all three batches in its first
+real samples. It was stopped
+and invalidated with zero post-attack detector evaluations. Protocol v2 enforces
+the promised format and canonical source references in ordinary Qwen decoding.
+Feature definitions, weights,
+filters, seeds and fixed budgets are unchanged; frozen baseline generations are
+reused with a recorded provenance link. See [the protocol amendment](skd-protocol-amendment.md).
 Final-text hashes deduplicate equivalent edits. Multiple alternatives at
 one span remain alternatives, never multiple selectable edits.
 
@@ -44,6 +59,8 @@ rejections and maximum non-overlapping interval capacity. Valid/safe counts are
 before deduplication; unique and capacity counts are after it. Candidate coverage
 denominators are all eligible baselines, with failed pools counted as unavailable.
 Ineligible baseline states are reported separately.
+Generation metadata preserves the public sample seed, attack-model digest,
+targeted canonical spans and each batch's schema hash and parse status.
 
 ## Five features and fixed score
 
