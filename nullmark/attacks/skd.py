@@ -9,10 +9,9 @@ from difflib import SequenceMatcher
 from time import perf_counter
 
 from nullmark.attacks.base import AttackOutput
-from nullmark.attacks.baselines import validate_output
 from nullmark.attacks.text import ANCHOR, GRAMMAR_WORDS, PROTECTED, WORD, anchors, distance, words
 
-VERSION = "skd-v2"
+VERSION = "skd-v3"
 METHODS = ("random_pool", "entropy_only", "context_only", "tokenizer_only", "skd")
 BUDGETS = (1, 2, 3, 5)
 FEATURES = ("E", "L", "T", "R", "D")
@@ -361,11 +360,48 @@ def apply(text, selected):
     return text
 
 
+def validate_result(original, result):
+    """Validate edits by construction; source formatting is never model commentary."""
+    detail = result.skd
+    k = detail["requested_edits"]
+    if (
+        result.version != VERSION
+        or type(k) is not int
+        or k not in BUDGETS
+        or type(result.requested_budget) is not int
+        or result.requested_budget != k
+    ):
+        raise ValueError("invalid exact edit request")
+    ids = detail["selected_ids"]
+    if (
+        type(detail["actual_edits"]) is not int
+        or len(set(ids)) != len(ids)
+        or len(ids) != detail["actual_edits"]
+        or len(ids) != min(k, capacity(detail["candidates"]))
+    ):
+        raise ValueError("invalid selected edit count")
+    by_id = {c["candidate_id"]: c for c in detail["candidates"]}
+    chosen = [by_id[cid] for cid in ids]
+    config = settings(detail["config"])
+    for candidate in chosen:
+        row = {key: candidate[key] for key in ("start", "end", "original", "replacement")}
+        if validate_candidate(original, row, config)["candidate_id"] != candidate["candidate_id"]:
+            raise ValueError("selected candidate identity mismatch")
+    if result.text != apply(original, chosen) or not result.text.strip():
+        raise ValueError("output differs from selected source edits")
+    if result.input_sha256 != hashlib.sha256(original.encode()).hexdigest():
+        raise ValueError("source identity mismatch")
+    if detail["candidate_exhaustion"] != (len(ids) < k):
+        raise ValueError("incorrect exhaustion accounting")
+    if anchors(original) != anchors(result.text):
+        raise ValueError("protected anchors changed")
+    return result
+
+
 def transform(sample, *, method, k, seed, model, artifact):
     started = perf_counter()
     selected = select(artifact["candidates"], method, k, seed)
     text = apply(sample.text, selected)
-    validate_output(sample.text, text, sample.prompt)
     detail = {
         **artifact,
         "requested_edits": k,
@@ -373,7 +409,7 @@ def transform(sample, *, method, k, seed, model, artifact):
         "candidate_exhaustion": len(selected) < k,
         "selected_ids": [c["candidate_id"] for c in selected],
     }
-    return SKDOutput(
+    result = SKDOutput(
         text=text,
         attack=method,
         version=VERSION,
@@ -390,3 +426,4 @@ def transform(sample, *, method, k, seed, model, artifact):
         token_metric="attack GGUF retokenization",
         skd=detail,
     )
+    return validate_result(sample.text, result)

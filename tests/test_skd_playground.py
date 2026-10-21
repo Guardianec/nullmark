@@ -8,7 +8,7 @@ pytest.importorskip("httpx")
 from fastapi.testclient import TestClient
 
 from nullmark.attacks.base import AttackInput
-from nullmark.attacks.skd import transform
+from nullmark.attacks.skd import settings, transform
 from nullmark.playground.app import create_app
 from nullmark.playground.service import AttackSettings, PlaygroundSettings
 
@@ -45,6 +45,7 @@ def test_skd_api_with_fixture_worker_and_ineligible_baseline(monkeypatch, tmp_pa
             seed=kwargs["seed"],
             model=SimpleNamespace(digest="a" * 64, sampling={}, tokenize=list),
             artifact=dict(
+                config=settings(),
                 candidates=[],
                 coverage=dict(selectable=0, unique=0, proposed=0),
                 selected_ids=[],

@@ -1,6 +1,6 @@
 import io
 import json
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -25,6 +25,7 @@ from nullmark.attacks.skd import (
     settings,
     transform,
     validate_candidate,
+    validate_result,
 )
 from nullmark.config import DatasetConfig
 from nullmark.datasets import load_prompts
@@ -242,6 +243,25 @@ def test_target_spans_are_deterministic_local_and_source_validated():
     result = generate_pool(AttackInput("x", "p", TEXT), model, None, settings(), 7)
     assert result["coverage"]["valid"] == 0
     assert result["rejections"]["invalid_unsafe_or_duplicate"] > 0
+
+
+@pytest.mark.parametrize("prefix", ["Here is a ", "Here are the ", "### Rewritten text\nThe "])
+def test_existing_source_format_is_preserved_and_new_commentary_is_rejected(prefix):
+    text = prefix + "useful method often helps people."
+    sample = AttackInput("opaque", "p", text)
+    model = Model()
+    artifact = generate_pool(
+        sample, model, SimpleNamespace(compare=lambda a, b: 0.99), settings(), 7
+    )
+    result = transform(sample, method="skd", k=1, seed=7, model=model, artifact=artifact)
+    assert result.text.startswith(prefix)
+    assert validate_result(text, result) is result
+    with pytest.raises(ValueError, match="output differs"):
+        validate_result(
+            text, replace(result, text="Here is extra model commentary. " + result.text)
+        )
+    with pytest.raises(ValueError, match="source identity"):
+        validate_result(text, replace(result, input_sha256="0" * 64))
 
 
 def test_normalization_ties_weights_and_missing():

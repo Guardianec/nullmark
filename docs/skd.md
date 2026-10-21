@@ -88,6 +88,11 @@ Random uses a deterministic shuffle; other methods rank their indicated feature.
 Select the highest-ranked feasible candidate, preserving sufficient remaining
 interval capacity to realize k whenever possible. This feasibility constraint is
 identical for every selector. Apply source spans from right to left, once.
+The worker and supervisor validate exact reconstruction from the selected source
+spans, candidate identities, source hash, edit count and protected anchors. Existing
+source preambles/headings remain legitimate source text; extra model commentary
+cannot be introduced outside the selected edits. This protocol-v3 correction is
+documented in the amendment, before any post-attack evaluations.
 No recomputation, detector query loop, proximity penalty or adaptive stopping.
 
 If capacity is below k, apply the available edits and explicitly record requested

@@ -1,4 +1,4 @@
-# SKD structured-output correction before post-attack evaluation
+# SKD implementation corrections before post-attack evaluation
 
 The first design was committed as
 `5f152135e25cd0ce0a9079c5da2b555274b0d3d0`. Its real source-generation phase
@@ -56,3 +56,27 @@ select weights, edits or replacements.
 The restarted run's manifest records the source run, correction reason and frozen
 file hashes. Failed pools and caches from the invalidated attempt are not copied.
 This is a documented software correction, not detector-guided SKD tuning.
+
+## Source-format validation correction — protocol v3
+
+The restarted candidate stage then exposed an inherited whole-text validator
+assumption: original Qwen continuations beginning with `Here is ...` were rejected
+as model commentary after otherwise valid localized edits. For example, the seed
+bank instructions already began “Here is a concise, safe planning checklist ...”
+and the beaver-dam technical explanation already began “Here is a plausible system
+model ...”. This prefix came from source generation and was not introduced by SKD.
+
+The attempt at `qwen-v030-r2` was preserved and invalidated, again with an empty
+post-attack evaluation file. Protocol `skd-v3` replaces this whole-text heuristic
+for SKD only. Both worker and supervisor verify that the output is exactly the
+right-to-left application of the selected, independently validated source spans,
+with matching source/candidate identities, exact feasible edit count, exhaustion
+state and protected anchors. Extra commentary or any change outside those spans
+is rejected. The frozen v0.2 validator and baseline behavior remain unchanged.
+
+Regression fixtures cover existing `Here is`, `Here are` and Markdown source
+headings, and reject newly added commentary. Candidate generation, language
+features, quality filters, weights, seeds and selectors are unchanged from v2.
+All candidates/attacks restart in another fresh directory, `qwen-v030-r3`, after
+committing this correction. Only the same byte-identical 480 baseline generations
+are reused. No attack outcomes entered either correction.

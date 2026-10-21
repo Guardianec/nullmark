@@ -11,7 +11,7 @@ from pathlib import Path
 
 from nullmark.attacks.base import AttackOutput
 from nullmark.attacks.baselines import TEMPLATE, VERSION, validate_output
-from nullmark.attacks.skd import METHODS, SKDOutput, settings
+from nullmark.attacks.skd import METHODS, SKDOutput, settings, validate_result
 from nullmark.attacks.skd import VERSION as SKD_VERSION
 from nullmark.evaluation.records import export_sample
 
@@ -107,7 +107,10 @@ class AttackWorker:
             if hashlib.sha256(serialized).hexdigest() != stored["output_sha256"]:
                 raise ValueError("attack cache content mismatch")
             result = output_type(**stored["output"])
-            validate_output(sample.text, result.text, sample.prompt)
+            if attack in METHODS:
+                validate_result(sample.text, result)
+            else:
+                validate_output(sample.text, result.text, sample.prompt)
             return result
         if self.process is not None and self.process.poll() is not None:
             self.close()
@@ -128,7 +131,10 @@ class AttackWorker:
         if "failure" in response:
             raise RuntimeError("attack transformation failed: " + response["failure"])
         result = output_type(**response["output"])
-        validate_output(sample.text, result.text, sample.prompt)
+        if attack in METHODS:
+            validate_result(sample.text, result)
+        else:
+            validate_output(sample.text, result.text, sample.prompt)
         if path:
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("x", encoding="utf-8") as handle:
