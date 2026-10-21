@@ -1,4 +1,32 @@
-# Visual Playground — v0.1.1
+# Visual Playground
+
+## Sparse Keyless Disruption — v0.3
+
+Choose **SKD** under Detector-blind attacks, then request **1, 2, 3 or 5 edits**.
+The installed Qwen model proposes localized alternatives; the pinned cached
+MiniLM model provides attack-side semantic checks. No detector result or key is
+available to the attack worker.
+
+The candidate inspector highlights source spans. Click a span or choose an
+alternative in the candidate selector to see raw feature values, per-sample
+normalized ranks, the final score, local embedding cosine and selection state.
+Selected edits are numbered in source order. Coverage distinguishes proposals,
+unique safe candidates and maximum selectable non-overlapping spans. Exhaustion
+reports requested and actual edits explicitly.
+
+**Research selection** exposes random, entropy, context and tokenizer ranking
+over the same candidate generation protocol. Keep the generation and attack seed
+fixed when comparing. The reproducible Experiment 004 is the authoritative
+matched-pool comparison, with saved pool hashes and all five selectors in one
+worker session.
+
+The displayed attack time includes the shared candidate-generation/feature cost.
+In benchmark records, that same shared cost is attributed to each selector and
+budget; summing those row runtimes overcounts total compute. The final text's
+semantic similarity and word/token edit fractions are separate measurements.
+Evaluator results are labeled **not available to SKD** and appear only after the
+transformed text is finalized. Ineligible baselines and abstentions retain their
+existing meanings. See [the fixed research protocol](skd.md).
 
 The playground is a local research instrument for existing generation and
 detection behavior. The CLI remains the authoritative reproducible experiment

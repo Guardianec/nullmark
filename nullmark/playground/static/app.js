@@ -289,7 +289,7 @@ $("attack-name").addEventListener("change", AttackControls);
 $("attack-controls").addEventListener("submit", async event => {
   event.preventDefault();
   if (!result) return;
-  const controls = [...document.querySelectorAll("#attack-controls input, #attack-controls select, #attack-controls button")];
+  const controls = [...document.querySelectorAll("#attack-controls input, #attack-controls select, #attack-controls button, #skd-research select")];
   controls.forEach(el => el.disabled = true);
   $("generate").disabled = true;
   $("attack-status").textContent = "Transforming locally, then measuring quality and frozen detector evidence…";
@@ -305,7 +305,8 @@ $("attack-controls").addEventListener("submit", async event => {
     $("detector-comparison").replaceChildren(...DetectorComparison(data));
     CandidateInspector(data);
     $("eligibility").textContent = data.eligibility_message;
-    $("attack-status").textContent = `${data.outcome} · ${data.attack.actual_word_edits} word edits · ${data.attack.runtime_seconds.toFixed(2)}s · ${[...data.attack.warnings, ...data.warnings].join(" · ")}`;
+    const seconds = data.attack.runtime_seconds + (data.attack.skd?.generation_seconds || 0);
+    $("attack-status").textContent = `${data.outcome} · ${data.attack.actual_word_edits} word edits · ${seconds.toFixed(2)}s · ${[...data.attack.warnings, ...data.warnings].join(" · ")}`;
     $("attack-comparison").hidden = false;
   } catch (error) {
     $("attack-status").textContent = error.message;
