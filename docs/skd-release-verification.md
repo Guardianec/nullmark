@@ -22,9 +22,15 @@ preserved and invalidated before any post-attack detector evaluation. The
 interface, unchanged weights and byte-identical reuse of the 480 source samples.
 The corrected offline suite passed **269 tests, 1 skipped**, in 59.94 seconds.
 
+The source-format validation correction is pre-registered in
+`1e9c2efc325faed2dfa0cd0f3719ee9bfb5fc0bc`. Both earlier candidate attempts remain
+preserved with zero post-attack evaluator rows. Protocol v3 validates exact
+selected-span reconstruction and source/candidate identities in both worker and
+supervisor. The latest full suite passed **272 tests, 1 skipped**, in 59.33 seconds.
+
 ## Completed checks
 
-- Full offline suite: **267 passed, 1 skipped**, 74.55 seconds. The skipped test is
+- Full offline suite: **272 passed, 1 skipped**, 59.33 seconds. The skipped test is
   the optional pretrained-model integration test. GUI fixtures and the complete
   SKD generation/attack/evaluation/report pipeline fixture run without Qwen,
   Ollama, embedding downloads or network access.

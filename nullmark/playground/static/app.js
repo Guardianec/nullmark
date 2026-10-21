@@ -268,11 +268,12 @@ function CandidateInspector(data) {
   dropdown.disabled = pool.length === 0;
   const source = $("skd-source");
   source.replaceChildren();
-  const boundaries = [...new Set([0, data.original.length, ...pool.flatMap(c => [c.start,c.end])])].sort((a,b) => a-b);
+  const sourceCharacters = Array.from(data.original);
+  const boundaries = [...new Set([0, sourceCharacters.length, ...pool.flatMap(c => [c.start,c.end])])].sort((a,b) => a-b);
   for (let i=0; i<boundaries.length-1; i++) {
     const start=boundaries[i], end=boundaries[i+1];
     const candidate = pool.find(c => c.start<=start && c.end>=end);
-    const text=data.original.slice(start,end);
+    const text=sourceCharacters.slice(start,end).join("");
     if (!candidate) { source.append(document.createTextNode(text)); continue; }
     const chosen=selected.find(c => c.start<=start && c.end>=end);
     const button=node("button", text, `skd-span${chosen ? " selected" : ""}`);
