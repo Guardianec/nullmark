@@ -10,10 +10,17 @@ The v0.3 branch starts at that exact commit. Historical calibration artifacts,
 v0.2 benchmark documents/configuration, corpus and baseline implementations are
 unchanged.
 
-The pre-registration commit is
+The initial pre-registration commit is
 `5f152135e25cd0ce0a9079c5da2b555274b0d3d0`. The fixed design was pushed before
 the real run; [CI passed](https://github.com/Guardianec/nullmark/actions/runs/39573586678)
 and [the draft release PR](https://github.com/Guardianec/nullmark/pull/3) is open.
+
+The structured-output correction is pre-registered in
+`1af06d32635eede8b19e5dc01f61226556bd2e66`. The initial candidate attempt was
+preserved and invalidated before any post-attack detector evaluation. The
+[documented amendment](skd-protocol-amendment.md) records the bounded canonical-span
+interface, unchanged weights and byte-identical reuse of the 480 source samples.
+The corrected offline suite passed **269 tests, 1 skipped**, in 59.94 seconds.
 
 ## Completed checks
 
