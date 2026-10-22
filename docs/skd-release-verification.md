@@ -1,7 +1,7 @@
 # v0.3 release verification
 
-Release status: **pending the complete real Experiment 004 and final evidence review**.
-No v0.3 tag or GitHub Release has been created at this checkpoint.
+The real Experiment 004 and evidence review are complete. The release handoff
+records the final merged SHA, CI status and published v0.3.0 release URL.
 
 The frozen v0.2.0 tag, published release and main commit were verified on GitHub
 before editing: `c06819dbbda232f3d7cef07a89e3da33ac5d6ff3`,
@@ -30,7 +30,7 @@ supervisor. The latest full suite passed **272 tests, 1 skipped**, in 59.33 seco
 
 ## Completed checks
 
-- Full offline suite: **272 passed, 1 skipped**, 59.33 seconds. The skipped test is
+- Final offline suite: **272 passed, 1 skipped**, 71.86 seconds. The skipped test is
   the optional pretrained-model integration test. GUI fixtures and the complete
   SKD generation/attack/evaluation/report pipeline fixture run without Qwen,
   Ollama, embedding downloads or network access.
@@ -61,10 +61,33 @@ were rerun successfully. No language model was downloaded. The Headroom
 compression proxy was unreachable, so targeted reads were used; this makes no
 claim that Codex traffic is automatically compressed.
 
-## Pending release gates
+## Final real evidence
 
-The complete real Qwen benchmark, deterministic qualitative inspection,
-publication of measured results/candidate features, a real benchmark screenshot,
-final rebuilt archives, final CI and v0.3 tag/release are still required. The
-benchmark is run from an editable Git checkout so its pre-registration integrity
-check can verify the committed source and corpus. v0.4 has not been started.
+Experiment 004 finalized **480 sources, 479 eligible pools and 9,580 evaluated
+attempts**, with no pipeline failures. Candidate coverage and realized exact-k
+counts are complete for all five selectors at 1/2/3/5 edits. Export validation
+checks identical pool hashes, candidate identities, non-overlap, actual counts,
+protocol version and exact reconstruction of every successful output.
+
+The fixed qualitative inspection covers both schemes before post-attack detector
+evaluation and records language failures. The [final research report](skd-final-report.md)
+publishes every method/budget, quality, coverage, intervals, correlations and
+representative 1/3/5 examples. No weights or filters were tuned after outcomes.
+
+The final screenshot uses actual saved Qwen KGW argument-01 at three edits:
+z-score 4.720643 → 4.386438, both DETECTED. It uses the production HTML/JS/CSS
+components in an explicitly labeled replay, with setup/empty generation sections
+hidden for focus. Candidate features, edits, diff, quality and evaluator values
+are unchanged benchmark data. Clickable spans update inspection; browser console
+checks are clean. The GUI badge was corrected to 0.3.0.
+
+The clean installed v0.3 wheel also reproduces saved Experiment 001 plain,
+SynthID and KGW text and all 192 native token IDs exactly. Public exports use an
+explicit allowlist, excluding private keys, native generation records, model
+weights and caches. Build/install/privacy checks are rerun on the final archives.
+
+The scientific design remains byte-identical to preregistration; the benchmark
+runner verifies this against Git. Final CPU/offline CI is required before merging
+and publishing. [Actions](https://github.com/Guardianec/nullmark/actions) and the
+[release](https://github.com/Guardianec/nullmark/releases/tag/v0.3.0) provide the
+published status. v0.4 has not been started.

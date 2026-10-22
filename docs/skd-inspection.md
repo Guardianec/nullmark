@@ -61,6 +61,6 @@ quantities or implicit requirements; unit words can still change.
 
 The inspection did not change weights, filters, candidate generation or any
 selection. It is a limited qualitative sample, not an estimated full-corpus
-human quality-pass rate. Add the measured whole-text quality and detector results
-after the fixed evaluation completes. Final representative 1/3/5 edit examples
-and the release screenshot must use saved protocol-v3 benchmark artifacts.
+human quality-pass rate. The completed [measured report](skd-final-report.md)
+adds whole-text quality, detector outcomes and representative saved protocol-v3
+1/3/5-edit examples. The release screenshot uses the same real benchmark artifacts.

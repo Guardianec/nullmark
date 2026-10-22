@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0 — Sparse Keyless Disruption
+
+- One shared pool of bounded local Qwen proposals, validated canonical source
+  spans, deduplication and capacity-preserving non-overlapping selection.
+- Five public detector-blind features and preregistered fixed weights; exact
+  1/2/3/5 edits; matched random, entropy, context, tokenizer and full-SKD selectors.
+- Experiment 004: 240 fresh prompts, 480 sources, 479 eligible pools and 9,580
+  evaluated attempts. Complete exact-k coverage, zero execution failures.
+- Full SKD evasion: KGW 0% at every budget; SynthID 0/0/.42/.42%. All paired
+  SKD-vs-random score-drop intervals include zero. Quality metrics, abstentions,
+  distributions, paired intervals, post-hoc correlations and seven plots published.
+- Candidate inspector with actual raw/normalized features, selected spans and
+  edits, text diff, quality and clearly labeled evaluator-only detector results.
+- Fixed qualitative inspection documents grammar/meaning failures despite high
+  cosine. Two implementation corrections were preregistered before post-attack
+  evaluation; invalidated attempts and byte-identical source provenance retained.
+- 272 offline tests pass, one optional integration skipped; clean wheel and
+  historical exact-replay checks. No v0.4 implementation or detector feedback.
+
 ## 0.2.0 — Baseline Attacks
 
 - Four keyless, detector-blind baseline families: Random Edit, contextual Local
