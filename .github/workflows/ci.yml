@@ -24,6 +24,7 @@ jobs:
       - run: pytest -q
       - run: nullmark --help
       - run: nullmark benchmark-attacks --help
+      - run: nullmark benchmark-skd --help
       - run: nullmark experiment run configs/experiments/cpu_smoke.yaml --output results/ci
       - run: python -m build
   playground:

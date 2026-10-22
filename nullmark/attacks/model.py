@@ -1,6 +1,7 @@
 """Unwatermarked GGUF transformation-only wrapper. Never constructs a detector."""
 
 import hashlib
+import json
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -19,21 +20,22 @@ class TransformationModel:
             if hashlib.file_digest(handle, "sha256").hexdigest() != self.digest:
                 raise ValueError("attack model digest mismatch")
         api = llama_module()
+        context_length = 8192 if config.get("skd_mode") else 4096
         self.sampling = {
             "temperature": 0.2,
             "top_k": 40,
             "top_p": 0.95,
-            "max_tokens": 768,
+            "max_tokens": 1536 if config.get("skd_mode") else 768,
             "enable_thinking": False,
             "repeat_penalty": 1.0,
             "min_p": 0.0,
             "backend_version": api.__version__,
-            "context_length": 4096,
+            "context_length": context_length,
             "chat_template_sha256": None,
         }
         self.llm = api.Llama(
             model_path=str(path),
-            n_ctx=4096,
+            n_ctx=context_length,
             n_batch=256,
             n_threads=8,
             n_gpu_layers=gpu_layers(
@@ -55,11 +57,14 @@ class TransformationModel:
     def tokenize(self, text):
         return self.llm.tokenize(text.encode(), add_bos=False, special=False)
 
-    def complete(self, instruction, seed):
+    def complete(self, instruction, seed, *, grammar=None):
         prompt = self.formatter(
             messages=[{"role": "user", "content": instruction}], enable_thinking=False
         ).prompt
-        if len(self.tokenize(prompt)) + self.sampling["max_tokens"] > 4096:
+        if (
+            len(self.tokenize(prompt)) + self.sampling["max_tokens"]
+            > self.sampling["context_length"]
+        ):
             raise ValueError("attack prompt exceeds context")
         response = self.llm.create_completion(
             prompt=prompt,
@@ -70,10 +75,31 @@ class TransformationModel:
             max_tokens=self.sampling["max_tokens"],
             repeat_penalty=1.0,
             min_p=0.0,
+            **({"grammar": grammar} if grammar is not None else {}),
         )
         if response["choices"][0]["finish_reason"] == "length":
             raise ValueError("truncated model output")
         return response["choices"][0]["text"]
+
+    def propose(self, instruction, seed, *, spans, max_candidates):
+        """Enforce the promised bounded JSON format without any outcome feedback."""
+        schema = {
+            "type": "array",
+            "maxItems": max_candidates,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["span_id", "replacement"],
+                "properties": {
+                    "span_id": {"type": "integer", "enum": [s["span_id"] for s in spans]},
+                    "replacement": {"type": "string", "minLength": 1, "maxLength": 120},
+                },
+            },
+        }
+        serialized = json.dumps(schema)
+        grammar = llama_module().LlamaGrammar.from_json_schema(serialized, verbose=False)
+        self.sampling["proposal_schema_sha256"] = hashlib.sha256(serialized.encode()).hexdigest()
+        return self.complete(instruction, seed, grammar=grammar)
 
     def paraphrase(self, text, seed):
         return self.complete(
@@ -145,3 +171,35 @@ class TransformationModel:
 
     def close(self):
         self.llm.close()
+
+    def skd_entropies(self, text, pool):
+        """Mean ordinary next-token entropy across source span token positions."""
+        ids = self.tokenize(text)
+        if len(ids) >= self.sampling["context_length"]:
+            raise ValueError("SKD entropy text exceeds context")
+        self.llm.reset()
+        self.llm.eval(ids)
+        # Prefix byte lengths preserve multibyte character alignment at span boundaries.
+        ends = [len(self.llm.detokenize(ids[:i])) for i in range(1, len(ids) + 1)]
+        starts = [0, *ends[:-1]]
+        needed = set()
+        indices = {}
+        for c in pool:
+            left, right = len(text[: c["start"]].encode()), len(text[: c["end"]].encode())
+            indices[(c["start"], c["end"])] = [
+                i - 1
+                for i, (a, b) in enumerate(zip(starts, ends, strict=True))
+                if a < right and b > left and i > 0
+            ]
+            needed.update(indices[(c["start"], c["end"])])
+        entropies = {}
+        for i in needed:
+            logits = np.array(self.llm.scores[i], dtype=np.float64)
+            logits -= logits.max()
+            p = np.exp(logits)
+            p /= p.sum()
+            entropies[i] = float(-np.sum(p * np.log(np.maximum(p, np.finfo(float).tiny))))
+        return {
+            start: float(np.mean([entropies[i] for i in positions])) if positions else 0.0
+            for start, positions in indices.items()
+        }

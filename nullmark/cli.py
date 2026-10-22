@@ -23,6 +23,13 @@ def parser() -> argparse.ArgumentParser:
     )
     root.add_argument("--version", action="version", version=__version__)
     commands = root.add_subparsers(dest="command", required=True)
+    skd = commands.add_parser("benchmark-skd", help="Run pre-registered SKD Experiment 004")
+    skd.add_argument("config", type=Path)
+    skd.add_argument("--output", type=Path, required=True)
+    skd.add_argument("--secrets", type=Path, required=True)
+    skd.add_argument("--design-commit", required=True)
+    skd.add_argument("--stage", choices=("all", "generate", "attack", "evaluate"), default="all")
+    skd.add_argument("--resume", action="store_true")
     attacks = commands.add_parser(
         "benchmark-attacks", help="Run frozen baseline Attack Experiment 003"
     )
@@ -83,6 +90,19 @@ def parser() -> argparse.ArgumentParser:
 
 
 def execute(args) -> int:
+    if args.command == "benchmark-skd":
+        from nullmark.experiments.skd import run_skd
+
+        output = run_skd(
+            args.config,
+            output=args.output,
+            secrets_path=args.secrets,
+            design_commit=args.design_commit,
+            stage=args.stage,
+            resume=args.resume,
+        )
+        print(f"Results: {output.resolve()}")
+        return 0
     if args.command == "benchmark-attacks":
         from nullmark.experiments.attacks import run_benchmark
 

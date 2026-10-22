@@ -1,0 +1,479 @@
+{
+  "selection": "First lexicographic prompt per style; alphabetical style order; fixed before attack outcomes",
+  "examples": [
+    {
+      "sample_id": "kgw:skd-v1-argument-01",
+      "style": "argument",
+      "scheme": "kgw",
+      "k": 1,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-argument-01",
+      "style": "argument",
+      "scheme": "kgw",
+      "k": 3,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-argument-01",
+      "style": "argument",
+      "scheme": "kgw",
+      "k": 5,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-argument-01",
+      "style": "argument",
+      "scheme": "synthid",
+      "k": 1,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-argument-01",
+      "style": "argument",
+      "scheme": "synthid",
+      "k": 3,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-argument-01",
+      "style": "argument",
+      "scheme": "synthid",
+      "k": 5,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-essay-01",
+      "style": "essay",
+      "scheme": "kgw",
+      "k": 1,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-essay-01",
+      "style": "essay",
+      "scheme": "kgw",
+      "k": 3,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-essay-01",
+      "style": "essay",
+      "scheme": "kgw",
+      "k": 5,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-essay-01",
+      "style": "essay",
+      "scheme": "synthid",
+      "k": 1,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-essay-01",
+      "style": "essay",
+      "scheme": "synthid",
+      "k": 3,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-essay-01",
+      "style": "essay",
+      "scheme": "synthid",
+      "k": 5,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-factual-01",
+      "style": "factual",
+      "scheme": "kgw",
+      "k": 1,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-factual-01",
+      "style": "factual",
+      "scheme": "kgw",
+      "k": 3,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-factual-01",
+      "style": "factual",
+      "scheme": "kgw",
+      "k": 5,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-factual-01",
+      "style": "factual",
+      "scheme": "synthid",
+      "k": 1,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-factual-01",
+      "style": "factual",
+      "scheme": "synthid",
+      "k": 3,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-factual-01",
+      "style": "factual",
+      "scheme": "synthid",
+      "k": 5,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-instructions-01",
+      "style": "instructions",
+      "scheme": "kgw",
+      "k": 1,
+      "methods": [
+        "tokenizer_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-instructions-01",
+      "style": "instructions",
+      "scheme": "kgw",
+      "k": 3,
+      "methods": [
+        "tokenizer_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-instructions-01",
+      "style": "instructions",
+      "scheme": "kgw",
+      "k": 5,
+      "methods": [
+        "tokenizer_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-instructions-01",
+      "style": "instructions",
+      "scheme": "synthid",
+      "k": 1,
+      "methods": [
+        "tokenizer_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-instructions-01",
+      "style": "instructions",
+      "scheme": "synthid",
+      "k": 3,
+      "methods": [
+        "tokenizer_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-instructions-01",
+      "style": "instructions",
+      "scheme": "synthid",
+      "k": 5,
+      "methods": [
+        "tokenizer_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-knowledge-01",
+      "style": "knowledge",
+      "scheme": "kgw",
+      "k": 1,
+      "methods": [
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-knowledge-01",
+      "style": "knowledge",
+      "scheme": "kgw",
+      "k": 3,
+      "methods": [
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-knowledge-01",
+      "style": "knowledge",
+      "scheme": "kgw",
+      "k": 5,
+      "methods": [
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-knowledge-01",
+      "style": "knowledge",
+      "scheme": "synthid",
+      "k": 1,
+      "methods": [
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-knowledge-01",
+      "style": "knowledge",
+      "scheme": "synthid",
+      "k": 3,
+      "methods": [
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-knowledge-01",
+      "style": "knowledge",
+      "scheme": "synthid",
+      "k": 5,
+      "methods": [
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-narrative-01",
+      "style": "narrative",
+      "scheme": "kgw",
+      "k": 1,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-narrative-01",
+      "style": "narrative",
+      "scheme": "kgw",
+      "k": 3,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-narrative-01",
+      "style": "narrative",
+      "scheme": "kgw",
+      "k": 5,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-narrative-01",
+      "style": "narrative",
+      "scheme": "synthid",
+      "k": 1,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-narrative-01",
+      "style": "narrative",
+      "scheme": "synthid",
+      "k": 3,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-narrative-01",
+      "style": "narrative",
+      "scheme": "synthid",
+      "k": 5,
+      "methods": [
+        "random_pool",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-science-01",
+      "style": "science",
+      "scheme": "kgw",
+      "k": 1,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-science-01",
+      "style": "science",
+      "scheme": "kgw",
+      "k": 3,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-science-01",
+      "style": "science",
+      "scheme": "kgw",
+      "k": 5,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-science-01",
+      "style": "science",
+      "scheme": "synthid",
+      "k": 1,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-science-01",
+      "style": "science",
+      "scheme": "synthid",
+      "k": 3,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-science-01",
+      "style": "science",
+      "scheme": "synthid",
+      "k": 5,
+      "methods": [
+        "entropy_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-technical-01",
+      "style": "technical",
+      "scheme": "kgw",
+      "k": 1,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-technical-01",
+      "style": "technical",
+      "scheme": "kgw",
+      "k": 3,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "kgw:skd-v1-technical-01",
+      "style": "technical",
+      "scheme": "kgw",
+      "k": 5,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-technical-01",
+      "style": "technical",
+      "scheme": "synthid",
+      "k": 1,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-technical-01",
+      "style": "technical",
+      "scheme": "synthid",
+      "k": 3,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    },
+    {
+      "sample_id": "synthid:skd-v1-technical-01",
+      "style": "technical",
+      "scheme": "synthid",
+      "k": 5,
+      "methods": [
+        "context_only",
+        "skd"
+      ]
+    }
+  ]
+}

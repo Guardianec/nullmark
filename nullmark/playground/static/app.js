@@ -229,13 +229,68 @@ function DetectorComparison(data) {
 }
 
 function AttackControls() {
-  $("budget-control").hidden = $("attack-name").value === "paraphrase";
+  const skd = $("attack-name").value === "skd";
+  $("budget-control").hidden = skd || $("attack-name").value === "paraphrase";
+  $("skd-edit-control").hidden = !skd;
+  $("skd-research").hidden = !skd;
+}
+function CandidateInspector(data) {
+  const detail = data.attack.skd;
+  $("skd-inspector").hidden = !detail;
+  if (!detail) return;
+  const pool = detail.candidates;
+  const selected = pool.filter(c => detail.selected_ids.includes(c.candidate_id)).sort((a,b) => a.start-b.start);
+  const coverage = detail.coverage;
+  $("skd-coverage").textContent = `${coverage.proposed} proposals · ${coverage.unique} unique safe candidates · ${coverage.selectable} selectable · requested ${detail.requested_edits}, selected ${detail.actual_edits}${detail.candidate_exhaustion ? " · candidate exhaustion" : ""}`;
+  const dropdown = $("skd-candidate");
+  dropdown.replaceChildren(...[...pool].sort((a,b) => b.final_score-a.final_score).map(c => {
+    const option = node("option", `${c.original} → ${c.replacement}${detail.selected_ids.includes(c.candidate_id) ? " · selected" : ""}`);
+    option.value = c.candidate_id;
+    return option;
+  }));
+  const inspect = id => {
+    dropdown.value = id;
+    const c = pool.find(c => c.candidate_id === id);
+    const panel = $("skd-candidate-detail");
+    if (!c) { panel.replaceChildren(node("p", "No safe candidates available.")); return; }
+    const heading = node("p", `“${c.original}” → “${c.replacement}”`, "skd-replacement");
+    const features = node("div", null, "quality-comparison");
+    [["Entropy opportunity", "E"], ["Context leverage", "L"], ["Tokenizer instability", "T"],
+     ["Replaceability", "R"], ["Semantic risk", "D"]].forEach(([label,key]) => {
+       const metric = node("div", null, "stat");
+       metric.append(node("span", label), node("strong", fmt(c[`normalized_${key}`])), node("small", `Raw ${fmt(c[key])}`));
+       features.append(metric);
+     });
+    panel.replaceChildren(heading, features,
+      node("p", `Final SKD score ${fmt(c.final_score)} · Local cosine ${fmt(c.local_semantic_similarity)} · Selected ${detail.selected_ids.includes(id) ? "YES" : "NO"}`));
+  };
+  dropdown.onchange = () => inspect(dropdown.value);
+  dropdown.disabled = pool.length === 0;
+  const source = $("skd-source");
+  source.replaceChildren();
+  const sourceCharacters = Array.from(data.original);
+  const boundaries = [...new Set([0, sourceCharacters.length, ...pool.flatMap(c => [c.start,c.end])])].sort((a,b) => a-b);
+  for (let i=0; i<boundaries.length-1; i++) {
+    const start=boundaries[i], end=boundaries[i+1];
+    const candidate = pool.find(c => c.start<=start && c.end>=end);
+    const text=sourceCharacters.slice(start,end).join("");
+    if (!candidate) { source.append(document.createTextNode(text)); continue; }
+    const chosen=selected.find(c => c.start<=start && c.end>=end);
+    const button=node("button", text, `skd-span${chosen ? " selected" : ""}`);
+    button.type="button";
+    button.title=chosen ? `Edit ${selected.indexOf(chosen)+1}: ${chosen.original} → ${chosen.replacement}` : `${candidate.original} → ${candidate.replacement}`;
+    button.setAttribute("aria-label", button.title);
+    button.addEventListener("click", () => inspect((chosen || candidate).candidate_id));
+    source.append(button);
+  }
+  $("skd-selected-edits").replaceChildren(...selected.map((c,i) => node("li", `Edit ${i+1}: ${c.original} → ${c.replacement}`)));
+  inspect(selected[0]?.candidate_id || dropdown.value);
 }
 $("attack-name").addEventListener("change", AttackControls);
 $("attack-controls").addEventListener("submit", async event => {
   event.preventDefault();
   if (!result) return;
-  const controls = [...document.querySelectorAll("#attack-controls input, #attack-controls select, #attack-controls button")];
+  const controls = [...document.querySelectorAll("#attack-controls input, #attack-controls select, #attack-controls button, #skd-research select")];
   controls.forEach(el => el.disabled = true);
   $("generate").disabled = true;
   $("attack-status").textContent = "Transforming locally, then measuring quality and frozen detector evidence…";
@@ -243,13 +298,16 @@ $("attack-controls").addEventListener("submit", async event => {
   try {
     const data = await post("/api/attack", {
       generation_id: result.generation_id, attack: $("attack-name").value,
-      budget: $("attack-name").value === "paraphrase" ? null : num("attack-budget"), seed: num("attack-seed")
+      budget: ["paraphrase", "skd"].includes($("attack-name").value) ? null : num("attack-budget"),
+      edits: num("skd-edits"), selection: $("skd-selection").value, seed: num("attack-seed")
     });
     $("text-comparison").replaceChildren(...TextComparison(data));
     $("quality-comparison").replaceChildren(...MetricComparison(data.quality));
     $("detector-comparison").replaceChildren(...DetectorComparison(data));
+    CandidateInspector(data);
     $("eligibility").textContent = data.eligibility_message;
-    $("attack-status").textContent = `${data.outcome} · ${data.attack.actual_word_edits} word edits · ${data.attack.runtime_seconds.toFixed(2)}s · ${[...data.attack.warnings, ...data.warnings].join(" · ")}`;
+    const seconds = data.attack.runtime_seconds + (data.attack.skd?.generation_seconds || 0);
+    $("attack-status").textContent = `${data.outcome} · ${data.attack.actual_word_edits} word edits · ${seconds.toFixed(2)}s · ${[...data.attack.warnings, ...data.warnings].join(" · ")}`;
     $("attack-comparison").hidden = false;
   } catch (error) {
     $("attack-status").textContent = error.message;
