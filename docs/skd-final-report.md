@@ -105,7 +105,7 @@ meaning and grammar failures even with high cosine.
 
 Paired intervals use 5,000 sample bootstrap resamples, seed 20261024, on exact-k common subsets (239 KGW / 240 SynthID; no missing score pairs). Positive differences favor SKD. Shared topics limit sample independence. Correlations deduplicate observed one-edit candidate IDs, with dependent observations within samples; they are descriptive post-hoc results.
 
- every selector to realize k edits. Pool coverage and all-eligible results remain visible alongside the comparable subsets.
+Primary comparisons require every selector to realize k edits. Pool coverage and all-eligible results remain visible alongside the comparable subsets.
 
 |Scheme|k|Reference|Pairs|SKD minus reference score reduction|95% bootstrap interval|
 |---|---:|---|---:|---:|---|
